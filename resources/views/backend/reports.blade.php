@@ -180,6 +180,23 @@
                             @endforeach
                         </tbody>
                     </table>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6 offset-md-3">
+                            <div class="card bg-secondary text-white">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="font-weight-bold">Total Orders in Range</span>
+                                        <span>{{ $totalRangeOrders }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="font-weight-bold">Total Sale in Range</span>
+                                        <span>Rs {{ number_format($totalRangeRevenue, 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -163,6 +163,13 @@
                 </tr>
             @endif
         </tbody>
+        <tfoot>
+            <tr style="background: #ddd; font-weight: bold;">
+                <td>Total</td>
+                <td>{{ $totalRangeOrders }}</td>
+                <td>Rs {{ number_format($totalRangeRevenue, 2) }}</td>
+            </tr>
+        </tfoot>
     </table>
 
 </body>

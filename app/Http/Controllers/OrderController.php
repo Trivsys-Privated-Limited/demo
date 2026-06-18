@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Guest;
 use App\Models\order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ class OrderController extends Controller
     {
         $request->validate([
             'table_id'         => 'required|exists:tables,id',
+            'guest_id'         => 'nullable|exists:guests,id',
             'order_number'     => 'nullable|integer',
             'items'            => 'required|array',
             'items.*.item_id'  => 'required|exists:items,id',
@@ -44,6 +46,10 @@ class OrderController extends Controller
                 
                 if ($existingOrder) {
                     $orderStatus = $existingOrder->status;
+                    if ($request->guest_id) {
+                        order::where('order_number', $orderNumber)
+                            ->update(['guest_id' => $request->guest_id]);
+                    }
                 } else {
                     $orderNumber = null;
                 }
@@ -74,6 +80,7 @@ class OrderController extends Controller
                     order::create([
                         'user_id'      => Auth::id() ?: 1,
                         'table_id'     => $request->table_id,
+                        'guest_id'     => $request->guest_id,
                         'item_id'      => $item['item_id'],
                         'quantity'     => $item['quantity'],
                         'total'        => $item['total'],
@@ -102,7 +109,7 @@ class OrderController extends Controller
 
     public function kitchen()
     {
-        $orders = order::with(['table', 'item'])
+        $orders = order::with(['table', 'item', 'guest'])
             ->orderBy('order_number', 'desc')
             ->get()
             ->groupBy('order_number');
@@ -129,7 +136,7 @@ class OrderController extends Controller
 
     public function show($orderNumber)
     {
-        $orders = order::with('item', 'table')
+        $orders = order::with(['item', 'table', 'guest'])
             ->where('order_number', $orderNumber)
             ->get();
         return response()->json($orders);
@@ -137,7 +144,7 @@ class OrderController extends Controller
 
     public function invoice($order)
     {
-        $orders = order::with(['table', 'item'])
+        $orders = order::with(['table', 'item', 'guest'])
             ->where('order_number', $order)
             ->get();
         if ($orders->isEmpty()) {

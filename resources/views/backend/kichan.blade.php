@@ -595,6 +595,8 @@
 
                 count++;
                 const table = group[0].table.table_number;
+                const guestName = group[0].guest ? group[0].guest.name : null;
+                const guestPhone = group[0].guest ? group[0].guest.phone : null;
                 const createdAt = new Date(group[0].created_at);
                 const timeStr = createdAt.toLocaleTimeString('en-GB', {
                     hour: '2-digit',
@@ -636,8 +638,9 @@
                 ${meta.label}
               </span>
             </div>
-            <div style="color:rgba(255,255,255,.3);font-size:11px;font-family:'JetBrains Mono',monospace;display:flex;gap:8px;align-items:center;">
+            <div style="color:rgba(255,255,255,.3);font-size:11px;font-family:'JetBrains Mono',monospace;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <span>🪑 T${table}</span>
+              ${guestName ? `<span style="color:rgba(255,255,255,.15);">│</span><span>👤 ${guestName}</span><span style="color:rgba(255,255,255,.15);">│</span><span>📞 ${guestPhone}</span>` : ''}
               <span style="color:rgba(255,255,255,.15);">│</span>
               <span>${dateStr}</span>
               <span style="color:rgba(255,255,255,.15);">│</span>
@@ -763,8 +766,9 @@
                   <h2 style="font-size:20px;font-weight:700;color:white;margin:0;">Order #${orderNumber}</h2>
                   <span class="pill ${meta.pill}">${meta.label}</span>
                 </div>
-                <div style="color:rgba(255,255,255,.3);font-size:12px;font-family:'JetBrains Mono',monospace;display:flex;gap:10px;">
+                <div style="color:rgba(255,255,255,.3);font-size:12px;font-family:'JetBrains Mono',monospace;display:flex;gap:10px;flex-wrap:wrap;">
                   <span>🪑 Table ${order[0].table.table_number}</span>
+                  ${guestName ? `<span>👤 ${guestName}</span><span>📞 ${guestPhone}</span>` : ''}
                   <span>⏱ ${new Date(order[0].created_at).toLocaleString('en-GB')}</span>
                 </div>
               </div>

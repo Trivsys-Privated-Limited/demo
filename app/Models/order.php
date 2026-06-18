@@ -8,6 +8,7 @@ class order extends Model
     protected $fillable = [
         'user_id',
         'table_id',
+        'guest_id',
         'item_id',
         'quantity',
         'total',
@@ -19,6 +20,11 @@ class order extends Model
     public function table()
     {
         return $this->belongsTo(table::class);
+    }
+
+    public function guest()
+    {
+        return $this->belongsTo(Guest::class);
     }
 
     public function item()

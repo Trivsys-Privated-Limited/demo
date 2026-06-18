@@ -14,9 +14,13 @@
 <body>
   <div class="header">
     <h2>Invoice #{{ $orders[0]->order_number }}</h2>
-    <p>Table: {{ $orders[0]->table->table_number }} | Date: {{ $orders[0]->created_at->format('d-M-Y H:i') }}</p>
-  </div>
-
+        <p>
+            Table: {{ $orders[0]->table->table_number }} | Date: {{ $orders[0]->created_at->format('d-M-Y H:i') }}
+            @if($orders[0]->guest)
+                <br>
+                Guest: {{ $orders[0]->guest->name }} | Phone: {{ $orders[0]->guest->phone }}
+            @endif
+        </p>
   <table>
     <thead>
       <tr>

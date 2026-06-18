@@ -78,7 +78,10 @@ class MenuController extends Controller
             ->first();
 
         $activeOrderNumber = $activeOrder ? $activeOrder->order_number : null;
+        $guest = Guest::where('table_id', $table->id)
+            ->latest()
+            ->first();
 
-        return view('frontend.menu', compact('table', 'menuItems', 'activeOrderNumber'));
+        return view('frontend.menu', compact('table', 'menuItems', 'activeOrderNumber', 'guest'));
     }
 }

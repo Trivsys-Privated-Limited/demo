@@ -1689,6 +1689,7 @@
 
             const orderData = {
                 table_id: {{ $table->id ?? 1 }},
+                guest_id: @json($guest->id ?? null),
                 order_number: combine ? activeOrderNumber : null,
                 items: cart.map(i => ({
                     item_id: i.id,

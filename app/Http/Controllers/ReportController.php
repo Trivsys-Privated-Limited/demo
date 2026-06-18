@@ -41,6 +41,8 @@ class ReportController extends Controller
             $q->where('id', $val);
         })->get();
         $tableReports = [];
+        $totalRangeOrders = 0;
+        $totalRangeRevenue = 0;
 
         foreach ($tables as $table) {
             // Daily
@@ -71,6 +73,9 @@ class ReportController extends Controller
                                         ->whereDate('created_at', '<=', $endDate)
                                         ->distinct('order_number')->count();
 
+            $totalRangeOrders += $rangeOrdersCount;
+            $totalRangeRevenue += $rangeRevenue;
+
             $tableReports[] = (object) [
                 'table_number' => $table->table_number,
                 'daily_orders' => $dailyOrdersCount,
@@ -87,7 +92,8 @@ class ReportController extends Controller
             'thisMonthTotal', 'thisMonthOrders', 
             'tableReports', 
             'startDate', 'endDate',
-            'allTables', 'selectedTable'
+            'allTables', 'selectedTable',
+            'totalRangeOrders', 'totalRangeRevenue'
         ));
     }
 
@@ -114,6 +120,8 @@ class ReportController extends Controller
             $q->where('id', $val);
         })->get();
         $tableReports = [];
+        $totalRangeOrders = 0;
+        $totalRangeRevenue = 0;
 
         foreach ($tables as $table) {
             $dailyRevenue = order::where('table_id', $table->id)->whereDate('created_at', Carbon::today())->sum('total');
@@ -124,6 +132,9 @@ class ReportController extends Controller
 
             $rangeRevenue = order::where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->sum('total');
             $rangeOrdersCount = order::where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->distinct('order_number')->count();
+
+            $totalRangeOrders += $rangeOrdersCount;
+            $totalRangeRevenue += $rangeRevenue;
 
             $tableReports[] = (object) [
                 'table_number' => $table->table_number,
@@ -140,7 +151,8 @@ class ReportController extends Controller
             'todayTotal', 'todayOrders', 
             'thisMonthTotal', 'thisMonthOrders', 
             'tableReports', 
-            'startDate', 'endDate'
+            'startDate', 'endDate',
+            'totalRangeOrders', 'totalRangeRevenue'
         ));
 
         return $pdf->download("Sales_Statement_{$startDate}_to_{$endDate}.pdf");
