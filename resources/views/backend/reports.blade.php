@@ -129,7 +129,7 @@
                 <div class="card-body">
                     <form action="{{ route('reports.index') }}" method="GET">
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-3"> 
                                 <div class="form-group">
                                     <label>Table</label>
                                     <select name="table_id" class="form-control">
