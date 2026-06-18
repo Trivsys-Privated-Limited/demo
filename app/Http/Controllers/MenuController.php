@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Table;
+use App\Models\table;
 use App\Models\Guest;
 use App\Models\item;
 use App\Models\order;
