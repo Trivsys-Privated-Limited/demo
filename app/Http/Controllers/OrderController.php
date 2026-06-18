@@ -15,7 +15,8 @@ class OrderController extends Controller
         $orders = order::with(['table', 'item'])
             ->orderBy('order_number', 'desc')
             ->get()
-            ->groupBy('order_number');
+            ->groupBy('order_number')
+            ->sortKeysDesc();
 
         return view('backend.order', compact('orders'));
     }

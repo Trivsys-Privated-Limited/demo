@@ -24,11 +24,19 @@
 
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white">
-                        <strong>Order #{{ $orderNumber }}</strong>
-                        - Table {{ $firstOrder->table->table_number }}
-                        - Status: {{ ucfirst($firstOrder->status) }}
-                        <span class="float-right">Placed at: {{ $firstOrder->created_at->format('d M Y, h:i A') }}</span>
-                    </div>
+    <div class="row w-100 m-0">
+        <div class="col-md-8 p-0">
+            <strong>Order #{{ $orderNumber }}</strong> | 
+            📍 Table {{ $firstOrder->table->table_number }} <br>
+            👤 <strong>Customer:</strong> {{ $firstOrder->guest->name ?? 'Walk-in Guest' }} | 
+            📞 <strong>Phone:</strong> {{ $firstOrder->guest->phone ?? 'N/A' }}
+        </div>
+        <div class="col-md-4 p-0 text-md-right mt-2 mt-md-0">
+            <span>Status: <span class="badge badge-light text-dark text-uppercase">{{ $firstOrder->status }}</span></span><br>
+            <small>Placed at: {{ $firstOrder->created_at->format('d M Y, h:i A') }}</small>
+        </div>
+    </div>
+</div>
                     <div class="card-body">
                         <table class="table table-bordered">
                             <thead>

@@ -582,16 +582,21 @@
         }
 
         // ── Render Cards ──────────────────────────────────
+
         function renderOrders(data) {
             const container = document.getElementById('ordersContainer');
             const emptyState = document.getElementById('emptyState');
             let html = '',
                 count = 0;
 
-            for (let orderNum in data) {
+            // 💡 FIX: Object ki keys (order numbers) nikali aur unhein numeric descending sort kiya
+            const sortedOrderNumbers = Object.keys(data).sort((a, b) => Number(b) - Number(a));
+
+            // 💡 FIX: Ab purane loop ki jagah sorted keys par loop chalayenge
+            sortedOrderNumbers.forEach(orderNum => {
                 const group = data[orderNum];
                 const status = group[0].status;
-                if (currentFilter !== 'all' && status !== currentFilter) continue;
+                if (currentFilter !== 'all' && status !== currentFilter) return; // forEach me return continue ka kaam krta hy
 
                 count++;
                 const table = group[0].table.table_number;
@@ -640,7 +645,10 @@
             </div>
             <div style="color:rgba(255,255,255,.3);font-size:11px;font-family:'JetBrains Mono',monospace;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <span>🪑 T${table}</span>
-              ${guestName ? `<span style="color:rgba(255,255,255,.15);">│</span><span>👤 ${guestName}</span><span style="color:rgba(255,255,255,.15);">│</span><span>📞 ${guestPhone}</span>` : ''}
+              ${guestName ? `<span style="color:rgba(255,255,255,.15);">│</span>
+              <span>👤 ${guestName}</span>
+              <span style="color:rgba(255,255,255,.15);">│</span>
+              <span>📞 ${guestPhone}</span>` : ''}
               <span style="color:rgba(255,255,255,.15);">│</span>
               <span>${dateStr}</span>
               <span style="color:rgba(255,255,255,.15);">│</span>
@@ -675,7 +683,7 @@
         </div>
 
       </div>`;
-            }
+            }); // 💡 FIX: Loop ka end yahan kiya
 
             container.innerHTML = html;
 
