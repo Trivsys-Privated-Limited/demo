@@ -97,4 +97,39 @@
         </div>
         <!-- /.sidebar -->
     </aside>
+
+    <script>
+function toggleCustomCategory(value) {
+    const customGroup = document.getElementById('customCategoryGroup');
+    const customInput = document.getElementById('custom_category');
+
+    if (value === 'custom_option') {
+        customGroup.style.display = 'block';
+        customInput.setAttribute('required', 'required'); // Nayi category likhna lazmi kar dega
+        customInput.focus();
+    } else {
+        customGroup.style.display = 'none';
+        customInput.removeAttribute('required');
+        customInput.value = ''; // Clear input if user switches back
+    }
+}
+</script>
+
+<script>
+    function toggleCustomCategory(value) {
+        const customGroup = document.getElementById('customCategoryGroup');
+        const customInput = document.getElementById('custom_category');
+
+        if (value === 'custom_option') {
+            customGroup.style.display = 'block';
+            customInput.setAttribute('required', 'required');
+            customInput.focus();
+        } else {
+            customGroup.style.display = 'none';
+            customInput.removeAttribute('required');
+            customInput.value = ''; // Clear input
+        }
+    }
+</script>
+
 @endsection

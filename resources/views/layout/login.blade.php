@@ -338,7 +338,7 @@
 
             <p class="welcome-text">Welcome to</p>
             <!-- Site Name -->
-            <h1 class="brand-name">Scan & <span>dine</span></h1>
+            <h1 class="brand-name">Scan<span>Dine</span></h1>
 
             <form action="{{ route('login.store') }}" method="POST" autocomplete="off">
                 @csrf

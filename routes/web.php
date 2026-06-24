@@ -10,6 +10,7 @@ use App\Http\Middleware\auth;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\ReviewController;
 
 Route::middleware([auth::class])->group(function () {
     Route::controller(dashboardController::class)->group(function () {
@@ -89,3 +90,6 @@ Route::post('/menu/{qr_token}/register', [MenuController::class, 'registerGuest'
 
 // 3. The actual menu page
 Route::get('/menu/{qr_token}/view', [MenuController::class, 'ShowMenu'])->name('menu.view');
+
+// Review Route
+Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');

@@ -861,7 +861,7 @@
             font-weight: 700;
             padding: 10px 22px;
             border-radius: 100px;
-            z-index: 700;
+            z-index: 10000;
             opacity: 0;
             pointer-events: none;
             transition: all .28s;
@@ -1444,6 +1444,14 @@
             <!-- Items will be injected here -->
         </div>
 
+        {{-- ─── Review Button ─── --}}
+        <div id="trackReviewBtn" style="display:none; padding: 10px 16px 4px;">
+            <button onclick="openReview()"
+                style="width:100%; background: linear-gradient(135deg, #F59E0B, #D97706); color:#fff; border:none; border-radius:12px; padding:11px 0; font-size:0.88rem; font-weight:800; cursor:pointer; letter-spacing:0.02em;">
+                ⭐ Rate Your Experience
+            </button>
+        </div>
+
         {{-- ─── Add More Items Button ─── --}}
         <div id="trackAddMoreBtn" style="display:none; padding: 10px 16px 4px;">
             <button onclick="closeTrackAndAddMore()"
@@ -1529,6 +1537,31 @@
             <div class="macts">
                 <button class="mcancel" onclick="closeNote()">Cancel</button>
                 <button class="mconfirm" id="continueOrderBtn">Confirm Order ✓</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ─── REVIEW MODAL ─── --}}
+    <div class="mov" id="reviewModal" onclick="if(event.target === this) closeReview()">
+        <div class="mbox" style="text-align: center;">
+            <div class="mh"></div>
+            <div class="mt">How was your food? 😋</div>
+            <p class="ms">Please rate your experience with us!</p>
+            
+            <div style="font-size: 2.5rem; margin-bottom: 15px; cursor: pointer;" id="starRating">
+                <span data-val="1">☆</span>
+                <span data-val="2">☆</span>
+                <span data-val="3">☆</span>
+                <span data-val="4">☆</span>
+                <span data-val="5">☆</span>
+            </div>
+            <input type="hidden" id="reviewRating" value="0">
+            
+            <textarea class="mta" id="reviewComment" rows="3" placeholder="Tell us what you loved (or didn't)..."></textarea>
+            
+            <div class="macts" style="margin-top: 15px;">
+                <button class="mcancel" onclick="closeReview()">Cancel</button>
+                <button class="mconfirm" onclick="submitReview()" style="background: #F59E0B; border-color: #F59E0B;">Submit Review</button>
             </div>
         </div>
     </div>
@@ -1799,6 +1832,8 @@
 
                         // Show/Hide Estimate
                         const estEl = document.getElementById('tcEstimate');
+                        const reviewBtn = document.getElementById('trackReviewBtn');
+
                         if (data.status === 'served' || data.status === 'cancelled') {
                             estEl.style.display = 'none';
                             if (estimateInterval) {
@@ -1806,8 +1841,14 @@
                                 estimateInterval = null;
                             }
                             activeEstimateOrder = null;
+                            
+                            // Show review button only if served
+                            if (reviewBtn) {
+                                reviewBtn.style.display = (data.status === 'served') ? 'block' : 'none';
+                            }
                         } else {
                             estEl.style.display = 'block';
+                            if (reviewBtn) reviewBtn.style.display = 'none';
                             startEstimateCountdown(30, data.order_number);
                         }
 
@@ -1904,6 +1945,75 @@
             const currentTimeEl = document.getElementById('currentTime');
             if (!currentTimeEl) return;
             currentTimeEl.textContent = now.toLocaleTimeString();
+        }
+
+        /* ── REVIEW LOGIC ── */
+        function openReview() {
+            document.getElementById('reviewModal').classList.add('show');
+        }
+
+        function closeReview() {
+            document.getElementById('reviewModal').classList.remove('show');
+        }
+
+        // Star Rating Animation
+        const stars = document.querySelectorAll('#starRating span');
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const val = this.getAttribute('data-val');
+                document.getElementById('reviewRating').value = val;
+                stars.forEach(s => {
+                    if (s.getAttribute('data-val') <= val) {
+                        s.textContent = '★';
+                        s.style.color = '#F59E0B'; // Gold Color
+                    } else {
+                        s.textContent = '☆';
+                        s.style.color = '#000'; // Black Color
+                    }
+                });
+            });
+        });
+
+        // Review Submit Request
+        function submitReview() {
+            const rating = document.getElementById('reviewRating').value;
+            const comment = document.getElementById('reviewComment').value;
+            
+            if (rating == 0) {
+                showToast('Please select a star rating! ⭐');
+                return;
+            }
+
+            const reviewData = {
+                table_id: {{ $table->id ?? 'null' }},
+                guest_id: @json($guest->id ?? null),
+                rating: rating,
+                comment: comment,
+                _token: '{{ csrf_token() }}'
+            };
+
+            fetch("{{ route('reviews.store') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(reviewData)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('🎉 Thank you for your review!');
+                    closeReview();
+                    document.getElementById('trackReviewBtn').style.display = 'none'; // Review dene ke baad button hide
+                } else {
+                    showToast('❌ Error submitting review');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('❌ Something went wrong!');
+            });
         }
 
         initTracking();
