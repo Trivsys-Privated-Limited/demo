@@ -103,13 +103,13 @@
                                 <div>
                                     <h3 class="card-title">
                                         <i class="fas fa-chart-line mr-2"></i>
-                                        This Month Revenue Trend
+                                        Sales Revenue Trend
                                     </h3>
-                                    <p class="text-sm text-muted mb-0">Last 30 days revenue performance</p>
+                                    <p class="text-sm text-muted mb-0">Revenue performance</p>
                                 </div>
                                <!--<div class="badge badge-pill badge-secondary py-2 px-3">Updated now</div> !-->
 
-                                 <!-- Testing Purpose start !-->
+                                 <!-- New filter start !-->
 
 <form method="GET" action="{{ route('dashboard.index') }}">
     <select name="filter" class="form-control form-control-sm" onchange="this.form.submit()">
@@ -137,7 +137,7 @@
     </select>
 </form>
 
-                               <!-- Testing Purpose end !-->
+                               <!-- new filter end !-->
 
                             </div>
                             <div class="card-body">
