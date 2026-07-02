@@ -99,6 +99,10 @@ class ReportController extends Controller
 
     public function download(Request $request)
     {
+        // Increase memory and execution time for PDF generation
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
         $startDate = $request->input('start_date', Carbon::today()->toDateString());
         $endDate = $request->input('end_date', Carbon::today()->toDateString());
 
@@ -154,6 +158,11 @@ class ReportController extends Controller
             'startDate', 'endDate',
             'totalRangeOrders', 'totalRangeRevenue'
         ));
+
+        // Clear any output buffers to avoid corrupted PDF files
+        if (ob_get_length() > 0) {
+            ob_end_clean();
+        }
 
         return $pdf->download("Sales_Statement_{$startDate}_to_{$endDate}.pdf");
     }
