@@ -1424,10 +1424,7 @@
         </div>
         
         <div class="tc-estimate" id="tcEstimate">
-            ⏳ Your food will be served in <b><span id="estimateTime">30:00</span></b>
-            <!-- <div style="font-size:0.8rem; margin-top: 6px;">
-                Current time: <span id="currentTime"></span>
-            </div> -->
+            ⏳ Your food will be served in <b><span id="estimateTime">00:00</span></b>
         </div>
 
         <div class="tc-footer">
@@ -1794,10 +1791,8 @@
             'cancelled': { text: 'Order Cancelled', emoji: '❌', progress: '100%', step: 0 }
         };
 
-        let activeEstimateOrder = null;
-        let estimateEndTime = null;
+        let estimateFinishTime = null;
         let estimateInterval = null;
-
         function initTracking() {
             if (trackingInterval) clearInterval(trackingInterval);
             pollStatus(false); // Silent poll
@@ -1805,13 +1800,17 @@
         }
 
         function openTrack() {
-            pollStatus(true); // Show card
+            const bar = document.getElementById('trackBar');
+            if (bar) bar.style.display = 'flex';
+            // populate the card (will update content or show error if fetch fails)
+            pollStatus(true);
         }
 
         function pollStatus(shouldShow) {
             fetch("{{ route('users.orderStatus', $table->qr_token) }}")
                 .then(r => r.json())
                 .then(data => {
+                    console.log('pollStatus response:', data);
                     if (data.success) {
                         if (data.status === 'pending' || data.status === 'preparing') {
                             activeOrderNumber = data.order_number;
@@ -1820,36 +1819,81 @@
                         }
                         renderCart();
 
-                        const config = STATUS_CONFIG[data.status] || STATUS_CONFIG['pending'];
                         const bar = document.getElementById('trackBar');
-                        
-                        if(shouldShow) bar.style.display = 'flex';
-                        
-                        document.getElementById('statusLabel').textContent = config.text;
-                        document.getElementById('tcEmoji').textContent = config.emoji;
-                        document.getElementById('tcProgress').style.width = config.progress;
-                        document.getElementById('orderIdLabel').textContent = 'Order #' + data.order_number;
-
-                        // Show/Hide Estimate
                         const estEl = document.getElementById('tcEstimate');
                         const reviewBtn = document.getElementById('trackReviewBtn');
 
-                        if (data.status === 'served' || data.status === 'cancelled') {
+                        // Determine UI status; prefer admin-entered times if present
+                        const baseConfig = STATUS_CONFIG[data.status] || STATUS_CONFIG['pending'];
+                        let config = baseConfig;
+                        if (data.delivered_at) {
+                            config = { text: 'Delivered', emoji: '✅', progress: '100%' };
+                            data.status = 'served';
+                        } else if (data.served_at) {
+                            config = STATUS_CONFIG['served'];
+                            data.status = 'served';
+                        }
+
+                        if (shouldShow) bar.style.display = 'flex';
+
+                        document.getElementById('statusLabel').textContent = config.text;
+                        document.getElementById('tcEmoji').textContent = config.emoji;
+                        document.getElementById('tcProgress').style.width = config.progress;
+                        // Defensive: avoid showing Order #0 or falsy values
+                        const orderLabel = (data.order_number && Number(data.order_number) !== 0) ? ('Order #' + data.order_number) : 'Order';
+                        document.getElementById('orderIdLabel').textContent = orderLabel;
+
+                        if (data.status === 'pending' || data.status === 'served' || data.status === 'cancelled') {
                             estEl.style.display = 'none';
                             if (estimateInterval) {
                                 clearInterval(estimateInterval);
                                 estimateInterval = null;
                             }
-                            activeEstimateOrder = null;
-                            
+
                             // Show review button only if served
                             if (reviewBtn) {
                                 reviewBtn.style.display = (data.status === 'served') ? 'block' : 'none';
                             }
-                        } else {
+                        } else if (data.status === 'preparing') {
                             estEl.style.display = 'block';
                             if (reviewBtn) reviewBtn.style.display = 'none';
-                            startEstimateCountdown(30, data.order_number);
+
+                            if (data.estimated_finish_at) {
+                                estEl.style.display = 'block';
+                                estimateFinishTime = new Date(data.estimated_finish_at);
+                                
+                                if(!document.getElementById('estimateTime')) {
+                                    estEl.innerHTML = '⏳ Your food will be served in <b><span id="estimateTime">00:00</span></b>';
+                                }
+
+                                if (!estimateInterval) {
+                                    estimateInterval = setInterval(() => {
+                                        const el = document.getElementById('estimateTime');
+                                        if (!el || !estimateFinishTime) return;
+
+                                        const now = new Date();
+                                        const diff = estimateFinishTime - now;
+                                        
+                                        if (diff <= 0) {
+                                            el.textContent = '00:00';
+                                            estEl.innerHTML = '⏳ Your food is arriving soon';
+                                            clearInterval(estimateInterval);
+                                            estimateInterval = null;
+                                            return;
+                                        }
+
+                                        const mins = Math.floor(diff / 60000);
+                                        const secs = Math.floor((diff % 60000) / 1000);
+                                        el.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                                    }, 1000);
+                                }
+                            } else {
+                                estEl.style.display = 'none';
+                                if (estimateInterval) {
+                                    clearInterval(estimateInterval);
+                                    estimateInterval = null;
+                                }
+                            }
                         }
 
                         // Show/Hide Add More Items button
@@ -1857,6 +1901,7 @@
                         if (addMoreBtn) {
                             addMoreBtn.style.display = (data.status === 'pending' || data.status === 'preparing') ? 'block' : 'none';
                         }
+
 
                         // Render Items
                         const listEl = document.getElementById('tcItemsList');
@@ -1902,50 +1947,6 @@
             document.getElementById('timeLabel').textContent = diffMins < 1 ? 'Just now' : diffMins + 'm ago';
         }
 
-        function startEstimateCountdown(minutes = 30, orderNumber = null) {
-            if (activeEstimateOrder === orderNumber && estimateInterval) {
-                return; // keep existing countdown for same active order
-            }
-
-            activeEstimateOrder = orderNumber;
-            estimateEndTime = new Date(Date.now() + minutes * 60000);
-
-            if (estimateInterval) clearInterval(estimateInterval);
-            estimateInterval = setInterval(() => {
-                updateEstimateCountdown();
-                updateCurrentTime();
-            }, 1000);
-
-            updateEstimateCountdown();
-            updateCurrentTime();
-        }
-
-        function updateEstimateCountdown() {
-            const el = document.getElementById('estimateTime');
-            const container = document.getElementById('tcEstimate');
-            if (!el || !container || !estimateEndTime) return;
-
-            const now = new Date();
-            const diff = estimateEndTime - now;
-            if (diff <= 0) {
-                el.textContent = '00:00';
-                container.innerHTML = '⏳ Your food is arriving soon';
-                clearInterval(estimateInterval);
-                estimateInterval = null;
-                return;
-            }
-
-            const mins = Math.floor(diff / 60000);
-            const secs = Math.floor((diff % 60000) / 1000);
-            el.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function updateCurrentTime() {
-            const now = new Date();
-            const currentTimeEl = document.getElementById('currentTime');
-            if (!currentTimeEl) return;
-            currentTimeEl.textContent = now.toLocaleTimeString();
-        }
 
         /* ── REVIEW LOGIC ── */
         function openReview() {
@@ -2019,7 +2020,6 @@
         initTracking();
         setInterval(() => {
             updateLiveTime();
-            updateCurrentTime();
         }, 1000);
     </script>
 </body>

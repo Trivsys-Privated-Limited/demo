@@ -15,6 +15,14 @@ class order extends Model
         'note',
         'order_number',
         'status',
+        'served_at',
+        'delivered_at',
+        'preparation_minutes',
+    ];
+
+    protected $casts = [
+        'served_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     public function table()

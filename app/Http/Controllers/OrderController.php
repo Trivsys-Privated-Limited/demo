@@ -6,6 +6,7 @@ use App\Models\order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use PDF;
 
 class OrderController extends Controller
@@ -127,12 +128,38 @@ class OrderController extends Controller
         $request->validate([
             'order_number' => 'required|exists:orders,order_number',
             'status'       => 'required|in:pending,preparing,served,cancelled',
+            'served_at'    => 'sometimes|nullable|date',
+            'delivered_at' => 'sometimes|nullable|date',
+            'preparation_minutes' => 'sometimes|nullable|integer|min:0',
         ]);
 
-        order::where('order_number', $request->order_number)
-            ->update(['status' => $request->status]);
+        $update = ['status' => $request->status];
 
-        return response()->json(['success' => true]);
+        if ($request->filled('served_at')) {
+            $update['served_at'] = Carbon::parse($request->served_at);
+        }
+
+        if ($request->filled('delivered_at')) {
+            $update['delivered_at'] = Carbon::parse($request->delivered_at);
+        }
+
+        if ($request->filled('preparation_minutes')) {
+            $update['preparation_minutes'] = (int) $request->preparation_minutes;
+        }
+
+        order::where('order_number', $request->order_number)->update($update);
+
+        // Fetch one row to return updated timestamps and status
+        $updatedOrder = order::where('order_number', $request->order_number)->first();
+
+        return response()->json([
+            'success' => true,
+            'order_number' => $request->order_number,
+            'status' => $updatedOrder ? $updatedOrder->status : $request->status,
+            'served_at' => $updatedOrder && $updatedOrder->served_at ? $updatedOrder->served_at->toIso8601String() : null,
+            'delivered_at' => $updatedOrder && $updatedOrder->delivered_at ? $updatedOrder->delivered_at->toIso8601String() : null,
+            'preparation_minutes' => $updatedOrder ? $updatedOrder->preparation_minutes : null,
+        ]);
     }
 
     public function show($orderNumber)

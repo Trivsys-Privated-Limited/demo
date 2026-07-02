@@ -33,7 +33,7 @@
         </div>
         <div class="col-md-4 p-0 text-md-right mt-2 mt-md-0">
             <span>Status: <span class="badge badge-light text-dark text-uppercase">{{ $firstOrder->status }}</span></span><br>
-            <small>Placed at: {{ $firstOrder->created_at->format('d M Y, h:i A') }}</small>
+            <small>Placed at: {{ $firstOrder->created_at->timezone('Asia/Karachi')->format('d M Y, h:i A') }}</small>
         </div>
     </div>
 </div>

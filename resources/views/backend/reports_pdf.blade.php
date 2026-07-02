@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Sales Statement</title>
+    @php
+    $siteName = config('app.name', env('APP_NAME', 'Restaurant Demo'));
+    $siteEmail = config('mail.from.address', env('MAIL_FROM_ADDRESS', 'info@example.com'));
+@endphp
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,9 +81,11 @@
 <body>
 
     <div class="header">
-        <h1>Restaurant Sales Statement</h1>
-        <p>Generated on: {{ \Carbon\Carbon::now()->format('d M Y, h:i A') }}</p>
-    </div>
+    <h1>{{ $siteName }}</h1>
+    <p>Email: {{ $siteEmail }}</p>
+    <p><strong>Restaurant Sales Statement</strong></p>
+    <p>Generated on: {{ \Carbon\Carbon::now()->format('d M Y, h:i A') }}</p>
+</div>
 
     <!-- Summary -->
     <table class="summary-box">
@@ -171,6 +177,8 @@
             </tr>
         </tfoot>
     </table>
+
+    <center> <h4> {{ $siteName }} • {{ $siteEmail }} </h4> </center>
 
 </body>
 </html>

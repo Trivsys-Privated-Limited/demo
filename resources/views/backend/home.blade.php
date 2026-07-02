@@ -95,6 +95,235 @@
                     <!-- ./col -->
                 </div>
                 <!-- /.row -->
+
+                <div class="row mt-4">
+                    <div class="col-lg-8">
+                        <div class="card card-primary card-outline">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="card-title">
+                                        <i class="fas fa-chart-line mr-2"></i>
+                                        This Month Revenue Trend
+                                    </h3>
+                                    <p class="text-sm text-muted mb-0">Last 30 days revenue performance</p>
+                                </div>
+                               <!--<div class="badge badge-pill badge-secondary py-2 px-3">Updated now</div> !-->
+
+                                 <!-- Testing Purpose start !-->
+
+<form method="GET" action="{{ route('dashboard.index') }}">
+    <select name="filter" class="form-control form-control-sm" onchange="this.form.submit()">
+
+        <option value="today" {{ $filter=='today' ? 'selected' : '' }}>
+            Today
+        </option>
+
+        <option value="week" {{ $filter=='week' ? 'selected' : '' }}>
+            Last 7 Days
+        </option>
+
+        <option value="month" {{ $filter=='month' ? 'selected' : '' }}>
+            Last 30 Days
+        </option>
+
+        <option value="year" {{ $filter=='year' ? 'selected' : '' }}>
+            This Year
+        </option>
+
+        <option value="all" {{ $filter=='all' ? 'selected' : '' }}>
+            All Time
+        </option>
+
+    </select>
+</form>
+
+                               <!-- Testing Purpose end !-->
+
+                            </div>
+                            <div class="card-body">
+                                <canvas id="salesAnalyticsChart" height="280"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card card-success card-outline mb-3">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-money-bill-wave mr-2"></i>
+                                    Revenue Summary
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-box bg-white mb-3 shadow-sm">
+                                    <span class="info-box-icon bg-success"><i class="fas fa-coins"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Today's Revenue</span>
+                                        <span class="info-box-number">Rs {{ number_format($todayRevenue, 2) }}</span>
+                                    </div>
+                                </div>
+                                <div class="info-box bg-white mb-3 shadow-sm">
+                                    <span class="info-box-icon bg-info"><i class="fas fa-calendar-alt"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">This Month Revenue</span>
+                                        <span class="info-box-number">Rs {{ number_format($thisMonthRevenue, 2) }}</span>
+                                    </div>
+                                </div>
+                                <div class="info-box bg-white shadow-sm">
+                                    <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Pending Orders</span>
+                                        <span class="info-box-number">{{ $pendingOrders }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card card-warning card-outline">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-chart-pie mr-2"></i>
+                                    Top Items Share
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="topItemsPieChart" height="240"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card card-light card-outline">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-utensils mr-2"></i>
+                                    Top Selling Items
+                                </h3>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                    @forelse($topItems as $itemData)
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ $itemData->item->name ?? 'Deleted Item' }}</strong>
+                                                <div class="text-muted text-sm">Sold {{ $itemData->total_qty }} times</div>
+                                            </div>
+                                            <span class="badge badge-pill badge-primary">{{ $itemData->total_qty }}</span>
+                                        </li>
+                                    @empty
+                                        <li class="list-group-item">No sales recorded yet.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @push('scripts')
+                    <script>
+                        const analyticsLabels = @json($analyticsLabels);
+                        const analyticsRevenue = @json($analyticsRevenue);
+                        const topItemsLabels = @json($topItemsLabels);
+                        const topItemsQty = @json($topItemsQty);
+
+                        if (typeof Chart !== 'undefined') {
+                            const lineCtx = document.getElementById('salesAnalyticsChart');
+                            if (lineCtx) {
+                                new Chart(lineCtx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: analyticsLabels,
+                                        datasets: [{
+                                            label: 'Revenue',
+                                            data: analyticsRevenue,
+                                            borderColor: '#007bff',
+                                            backgroundColor: 'rgba(0, 123, 255, 0.18)',
+                                            pointBackgroundColor: '#004085',
+                                            pointBorderColor: '#ffffff',
+                                            pointHoverRadius: 6,
+                                            fill: true,
+                                            tension: 0.35,
+                                            borderWidth: 3
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top',
+                                                labels: {
+                                                    color: '#333'
+                                                }
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        return 'Rs ' + context.formattedValue;
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            x: {
+                                                grid: { display: false },
+                                                ticks: { color: '#555' }
+                                            },
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    color: '#555',
+                                                    callback: function(value) {
+                                                        return 'Rs ' + value;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            const pieCtx = document.getElementById('topItemsPieChart');
+                            if (pieCtx) {
+                                new Chart(pieCtx, {
+                                    type: 'pie',
+                                    data: {
+                                        labels: topItemsLabels,
+                                        datasets: [{
+                                            data: topItemsQty,
+                                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8', '#dc3545'],
+                                            borderColor: '#ffffff',
+                                            borderWidth: 2
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: { color: '#333' }
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        const label = context.label || '';
+                                                        const value = context.formattedValue || 0;
+                                                        return label + ': ' + value + ' sold';
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    </script>
+                @endpush
+
                 <!-- Main row -->
                 {{-- <div class="row">
                     <!-- Left col -->

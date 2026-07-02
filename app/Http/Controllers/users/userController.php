@@ -153,6 +153,16 @@ class userController extends Controller
             'order_number' => $order->order_number,
             'created_at'   => $order->created_at->toIso8601String(),
             'server_time'  => now()->toIso8601String(),
+            'served_at'    => $order->served_at ? $order->served_at->toIso8601String() : null,
+            'delivered_at' => $order->delivered_at ? $order->delivered_at->toIso8601String() : null,
+            'preparation_minutes' => $order->preparation_minutes ?? null,
+            'estimated_finish_at' => (function() use ($order) {
+                // Priority: delivered_at > served_at > preparation_minutes > null
+                if ($order->delivered_at) return $order->delivered_at->toIso8601String();
+                if ($order->served_at) return $order->served_at->toIso8601String();
+                if ($order->preparation_minutes) return $order->created_at->copy()->addMinutes($order->preparation_minutes)->toIso8601String();
+                return null;
+            })(),
             'items'        => $orderItems->map(fn($oi) => [
                 'name' => $oi->item->name,
                 'qty'  => $oi->quantity
