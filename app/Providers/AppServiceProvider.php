@@ -6,21 +6,20 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Schema;
 use App\Models\ContactMessage;
-use App\Models\order; // Aapke OrderController ke mutabiq small 'o'
+use App\Models\order; // Model check karlein small 'o' hy ya capital 'O'
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Isko khali chordein
     }
 
     public function boot(): void
     {
-        // Har blade view ke sath navbar data share karne ke liye
+        // YAHAN PAR APNA CODE LAZMI CHECK KAREIN
         View::composer('*', function ($view) {
             
-            // Default values
             $navMessages = collect();
             $unreadMessagesCount = 0;
             $pendingOrdersCount = 0;
@@ -31,7 +30,6 @@ class AppServiceProvider extends ServiceProvider
                 $userRole = auth()->user()->role;
 
                 try {
-                    // Safety check 1: Agar contact_messages table majood hai
                     if (Schema::hasTable('contact_messages')) {
                         $navMessages = ContactMessage::where('receiver_id', $userId)
                             ->where('is_read', 0)
@@ -45,7 +43,6 @@ class AppServiceProvider extends ServiceProvider
                             ->count();
                     }
 
-                    // Safety check 2: Agar orders table majood hai
                     if (Schema::hasTable('orders')) {
                         if ($userRole === 'super_admin') {
                             $pendingOrdersCount = order::where('status', 'pending')->count();
@@ -60,11 +57,11 @@ class AppServiceProvider extends ServiceProvider
                     $totalNotifications = $pendingOrdersCount;
 
                 } catch (\Exception $e) {
-                    // Agar database ka koi masla aaye toh layout crash hone se bach jayega
+                    // Fail-safe
                 }
             }
 
-            // Views ko variables pass karein
+            // Variables ko share karna
             $view->with([
                 'navMessages'         => $navMessages,
                 'unreadMessagesCount' => $unreadMessagesCount,

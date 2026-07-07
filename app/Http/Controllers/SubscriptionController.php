@@ -14,7 +14,9 @@ class SubscriptionController extends Controller
      */
     public function index($userId)
     {
-        $restaurant    = User::where('role', 'restaurant')->findOrFail($userId);
+        // 'restaurant' ya 'restaurant_admin' dono ko allow karne ke liye whereIn lagaya hai
+        $restaurant = User::whereIn('role', ['restaurant', 'restaurant_admin'])->findOrFail($userId);
+        
         $subscriptions = Subscription::where('user_id', $userId)
             ->orderByDesc('start_date')
             ->get();
@@ -39,7 +41,7 @@ class SubscriptionController extends Controller
      */
     public function create($userId)
     {
-        $restaurant = User::where('role', 'restaurant')->findOrFail($userId);
+        $restaurant = User::whereIn('role', ['restaurant', 'restaurant_admin'])->findOrFail($userId);
         return view('backend.subscription.create', compact('restaurant'));
     }
 
@@ -55,11 +57,12 @@ class SubscriptionController extends Controller
             'notes'      => 'nullable|string|max:500',
         ]);
 
-        $restaurant = User::where('role', 'restaurant')->findOrFail($userId);
+        $restaurant = User::whereIn('role', ['restaurant', 'restaurant_admin'])->findOrFail($userId);
 
         $startDate = Carbon::parse($request->start_date);
         $months = (int) $request->months;
         $endDate   = $startDate->copy()->addMonths($months)->subDay();
+        
         // Create subscription
         Subscription::create([
             'user_id'    => $userId,
