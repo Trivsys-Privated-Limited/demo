@@ -8,26 +8,26 @@
             <li class="nav-item d-none d-sm-inline-block">
                 <a href="{{route('dashboard.index')}}" class="nav-link">Home</a>
             </li>
-            <li class="nav-item d-none d-sm-inline-block">
+            <!-- <li class="nav-item d-none d-sm-inline-block">
                 <a href="#" class="nav-link">Contact</a>
-            </li>
+            </li> -->
         </ul>
 
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
             <!-- Navbar Search -->
-            <li class="nav-item">
+           <!-- <li class="nav-item">
                 <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-                    <i class="fas fa-search"></i>
+                     <i class="fas fa-search"></i>
                 </a>
                 <div class="navbar-search-block">
                     <form class="form-inline">
                         <div class="input-group input-group-sm">
-                            <input class="form-control form-control-navbar" type="search" placeholder="Search"
-                                aria-label="Search">
+                              <input class="form-control form-control-navbar" type="search" placeholder="Search"
+                                aria-label="Search"> 
                             <div class="input-group-append">
                                 <button class="btn btn-navbar" type="submit">
-                                    <i class="fas fa-search"></i>
+                                     <i class="fas fa-search"></i> 
                                 </button>
                                 <button class="btn btn-navbar" type="button" data-widget="navbar-search">
                                     <i class="fas fa-times"></i>
@@ -36,18 +36,18 @@
                         </div>
                     </form>
                 </div>
-            </li>
+            </li> -->
 
             <!-- Messages Dropdown Menu -->
-            <li class="nav-item dropdown">
+           <!-- <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <i class="far fa-comments"></i>
                     <span class="badge badge-danger navbar-badge">3</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                    <a href="#" class="dropdown-item">
+                    <a href="#" class="dropdown-item"> -->
                         <!-- Message Start -->
-                        <div class="media">
+                      <!--  <div class="media">
                             <img src="dist/img/user1-128x128.jpg" alt="User Avatar" class="img-size-50 mr-3 img-circle">
                             <div class="media-body">
                                 <h3 class="dropdown-item-title">
@@ -57,13 +57,14 @@
                                 <p class="text-sm">Call me whenever you can...</p>
                                 <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
                             </div>
-                        </div>
+                        </div> -->
+                    
                         <!-- Message End -->
-                    </a>
+                  <!--  </a> 
                     <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item">
+                    <a href="#" class="dropdown-item"> -->
                         <!-- Message Start -->
-                        <div class="media">
+                       <!-- <div class="media">
                             <img src="dist/img/user8-128x128.jpg" alt="User Avatar" class="img-size-50 img-circle mr-3">
                             <div class="media-body">
                                 <h3 class="dropdown-item-title">
@@ -73,13 +74,13 @@
                                 <p class="text-sm">I got your message bro</p>
                                 <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
                             </div>
-                        </div>
+                        </div> -->
                         <!-- Message End -->
-                    </a>
+                    <!-- </a> 
                     <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item">
+                    <a href="#" class="dropdown-item">  -->
                         <!-- Message Start -->
-                        <div class="media">
+                      <!--  <div class="media">
                             <img src="dist/img/user3-128x128.jpg" alt="User Avatar" class="img-size-50 img-circle mr-3">
                             <div class="media-body">
                                 <h3 class="dropdown-item-title">
@@ -89,15 +90,16 @@
                                 <p class="text-sm">The subject goes here</p>
                                 <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
                             </div>
-                        </div>
+                        </div> -->
                         <!-- Message End -->
-                    </a>
+                   <!-- </a>
                     <div class="dropdown-divider"></div>
                     <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>
                 </div>
-            </li>
+            </li> -->
             <!-- Notifications Dropdown Menu -->
-            <li class="nav-item dropdown">
+            
+            <!-- <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <i class="far fa-bell"></i>
                     <span class="badge badge-warning navbar-badge">15</span>
@@ -122,21 +124,84 @@
                     <div class="dropdown-divider"></div>
                     <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
                 </div>
-            </li>
+            </li> -->
+
+            <!-- New Message And Notification Work Start -->
+              <li class="nav-item dropdown">
+    <a class="nav-link" data-toggle="dropdown" href="#">
+        <i class="far fa-comments"></i>
+        @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)
+            <span class="badge badge-danger navbar-badge">{{ $unreadMessagesCount }}</span>
+        @endif
+    </a>
+    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+        @if(isset($navMessages) && $navMessages->count() > 0)
+            @foreach($navMessages as $msg)
+                <a href="{{ route('contact.index') }}" class="dropdown-item">
+                    <div class="media">
+                        <div class="media-body">
+                            <h3 class="dropdown-item-title">
+                                {{ $msg->sender->name ?? 'Unknown' }}
+                                <span class="float-right text-sm text-muted"><i class="far fa-clock mr-1"></i></span>
+                            </h3>
+                            <p class="text-sm" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ $msg->subject }}
+                            </p>
+                            <p class="text-sm text-muted">{{ $msg->created_at->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                    </a>
+                <div class="dropdown-divider"></div>
+            @endforeach
+        @else
+            <span class="dropdown-item dropdown-header text-center">No new messages</span>
+            <div class="dropdown-divider"></div>
+        @endif
+        
+        <a href="{{ route('contact.index') }}" class="dropdown-item dropdown-footer text-center">See All Messages</a>
+    </div>
+</li> 
+
+<li class="nav-item dropdown">
+    <a class="nav-link" data-toggle="dropdown" href="#">
+        <i class="far fa-bell"></i>
+        @if(isset($totalNotifications) && $totalNotifications > 0)
+            <span class="badge badge-warning navbar-badge">{{ $totalNotifications }}</span>
+        @endif
+    </a>
+    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+        <span class="dropdown-item dropdown-header">{{ $totalNotifications ?? 0 }} Notifications</span>
+        <div class="dropdown-divider"></div>
+        
+        @if(isset($pendingOrdersCount) && $pendingOrdersCount > 0)
+            <a href="{{ route('orders.index') }}" class="dropdown-item">
+                <i class="fas fa-shopping-basket mr-2 text-warning"></i> {{ $pendingOrdersCount }} pending orders
+            </a>
+            <div class="dropdown-divider"></div>
+        @else
+            <span class="dropdown-item text-center text-muted text-sm py-2">No new notifications</span>
+            <div class="dropdown-divider"></div>
+        @endif
+        
+        <a href="{{ route('orders.index') }}" class="dropdown-item dropdown-footer text-center">View All Orders</a>
+    </div>
+</li>
+            <!-- New Message And Nofification Work End -->
+        
             <li class="nav-item">
                 <a class="nav-link" data-widget="fullscreen" href="#" role="button">
                     <i class="fas fa-expand-arrows-alt"></i>
                 </a>
             </li>
-            <li class="nav-item">
+           <!-- <li class="nav-item">
                 <a class="nav-link" data-widget="control-sidebar" data-controlsidebar-slide="true" href="#"
                     role="button">
                     <i class="fas fa-th-large"></i>
                 </a>
-            </li>
-            <li class="nav-item d-none d-sm-inline-block">
+            </li> !-->
+           <!-- <li class="nav-item d-none d-sm-inline-block">
                 <a href="{{route('logout')}}" class="nav-link">Logout</a>
-            </li>
+            </li> !-->
         </ul>
     </nav>
 @endsection

@@ -548,7 +548,7 @@
 
         // ── Fetch ─────────────────────────────────────────
         function fetchOrders() {
-            fetch("{{ route('orders.kichan') }}", {
+            fetch("{{ route('orders.kitchen') }}", {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -677,7 +677,7 @@
         <hr class="kdivider">
 
         {{-- Actions --}}
-        <div style="padding:12px 18px;display:flex;gap:8px;align-items:center;">
+         <div style="padding:12px 18px;display:flex;gap:8px;align-items:center;">
           <button onclick="openModal(${orderNum})" class="btn btn-purple" style="flex:1;">🔍 Details</button>
           <button onclick="printInvoice(${orderNum})" class="btn btn-pink" style="flex:1;">🖨 Invoice</button>
         </div>
@@ -775,29 +775,39 @@
         }
 
         // ── Modal ──────────────────────────────────────────
+        // new code //
+       // ── Modal ──────────────────────────────────────────
         function openModal(orderNumber) {
             fetch(`/orders/${orderNumber}`)
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) throw new Error(`Server error: ${r.status}`);
+                    return r.json();
+                })
                 .then(order => {
-                    if (!order.length) return alert('Order not found');
+                    if (!order || order.length === 0) return alert('Order not found');
 
-                    const status = order[0].status;
+                    const orderData = Array.isArray(order) ? order[0] : order;
+                    const itemsArray = Array.isArray(order) ? order : (order.items || [order]);
+
+                    const status = orderData.status;
                     const meta = statusMeta[status] || statusMeta.pending;
-                    const guestName = order[0].guest ? order[0].guest.name : null;
-                    const guestPhone = order[0].guest ? order[0].guest.phone : null;
+                    const guestName = orderData.guest ? orderData.guest.name : null;
+                    const guestPhone = orderData.guest ? orderData.guest.phone : null;
+                    const tableName = orderData.table ? orderData.table.table_number : 'N/A';
 
                     let total = 0;
-                    const rows = order.map(item => {
-                        total += item.total;
+                    const rows = itemsArray.map(item => {
+                        const itemName = item.item ? item.item.name : (item.name || 'Unknown Item');
+                        total += Number(item.total || 0);
                         return `
                   <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06);">
                     <div style="display:flex;align-items:center;gap:10px;">
                       <span style="background:rgba(255,255,255,.08);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);font-family:'JetBrains Mono',monospace;">
-                        ${item.quantity}×
+                        ${item.quantity || 1}×
                       </span>
-                      <span style="color:rgba(255,255,255,.85);font-size:13px;">${item.item.name}</span>
+                      <span style="color:rgba(255,255,255,.85);font-size:13px;">${itemName}</span>
                     </div>
-                    <span style="color:rgba(255,255,255,.4);font-size:12px;font-family:'JetBrains Mono',monospace;">Rs.${item.total}</span>
+                    <span style="color:rgba(255,255,255,.4);font-size:12px;font-family:'JetBrains Mono',monospace;">Rs.${item.total || 0}</span>
                   </div>`;
                     }).join('');
 
@@ -808,9 +818,9 @@
                   <span class="pill ${meta.pill}">${meta.label}</span>
                 </div>
                 <div style="color:rgba(255,255,255,.3);font-size:12px;font-family:'JetBrains Mono',monospace;display:flex;gap:10px;flex-wrap:wrap;">
-                  <span>🪑 Table ${order[0].table.table_number}</span>
+                  <span>🪑 Table ${tableName}</span>
                   ${guestName ? `<span>👤 ${guestName}</span><span>📞 ${guestPhone}</span>` : ''}
-                  <span>⏱ ${new Date(order[0].created_at).toLocaleString('en-GB')}</span>
+                  <span>⏱ ${new Date(orderData.created_at).toLocaleString('en-GB')}</span>
                 </div>
               </div>
 
@@ -822,25 +832,28 @@
                 </div>
               </div>
 
-                            <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;">
-                                <div style="display:flex;gap:8px;align-items:center;">
-                                    <label style="color:rgba(255,255,255,.6);font-size:12px;width:100px;">Prep Time (Mins)</label>
-                                    <input id="prepMinutesInput" type="number" min="0" placeholder="Minutes" value="${order[0].preparation_minutes ?? ''}" style="width:110px;padding:8px;border-radius:8px;background:#0f0f14;border:1px solid rgba(255,255,255,.06);color:white;" />
-                                    <button onclick="saveTimes(${orderNumber})" class="btn btn-purple" style="padding:8px 12px;">💾 Save Time</button>
-                                </div>
-                            </div>
+              <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <label style="color:rgba(255,255,255,.6);font-size:12px;width:100px;">Prep Time (Mins)</label>
+                    <input id="prepMinutesInput" type="number" min="0" placeholder="Minutes" value="${orderData.preparation_minutes ?? ''}" style="width:110px;padding:8px;border-radius:8px;background:#0f0f14;border:1px solid rgba(255,255,255,.06);color:white;" />
+                    <button onclick="saveTimes('${orderNumber}')" class="btn btn-purple" style="padding:8px 12px;">💾 Save Time</button>
+                </div>
+              </div>
 
-                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                                <button onclick="saveTimes(${orderNumber},'preparing');" class="btn btn-blue" style="padding:10px;">🔥 Confirm & Save</button>
-                                <button onclick="updateStatus(${orderNumber},'served');closeModal();" class="btn btn-green" style="padding:10px;">✅ Served</button>
-                                <button onclick="updateStatus(${orderNumber},'cancelled');closeModal();" class="btn btn-red" style="padding:10px;">✕ Decline</button>
-                            </div>
-            `;
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <button onclick="saveTimes('${orderNumber}','preparing');" class="btn btn-blue" style="padding:10px;">🔥 Confirm & Save</button>
+                <button onclick="updateStatus('${orderNumber}','served');closeModal();" class="btn btn-green" style="padding:10px;">✅ Served</button>
+                <button onclick="updateStatus('${orderNumber}','cancelled');closeModal();" class="btn btn-red" style="padding:10px;">✕ Decline</button>
+              </div>`;
 
                     document.getElementById('orderModal').style.display = 'flex';
+                })
+                .catch(e => {
+                    console.error("Modal Error:", e);
+                    alert("Aapko is order ki details dekhne ki permission nahi hai (403).");
                 });
         }
-
+        ////////////// End New Code
         function closeModal() {
             document.getElementById('orderModal').style.display = 'none';
         }

@@ -80,6 +80,110 @@ class userController extends Controller
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
 
+    public function editPassword($id)
+    {
+        $user = User::findOrFail($id);
+        return view('backend.user.edit_password', compact('user'));
+    }
+
+    public function updatePassword(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->update([
+            'password' => $request->password,
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User password updated successfully.');
+    }
+
+    /**
+     * ============================================
+     * STAFF MANAGEMENT (For Restaurant Admin)
+     * ============================================
+     */
+    public function staffIndex()
+    {
+        $restaurantId = auth()->id();
+        $staff = User::where('parent_id', $restaurantId)
+            ->where('role', 'restaurant_user')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('backend.staff.index', compact('staff'));
+    }
+
+    public function staffCreate()
+    {
+        return view('backend.staff.create');
+    }
+
+    public function staffStore(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'phone'    => 'required|unique:users,phone',
+            'password' => 'required|min:6',
+        ]);
+
+        User::create([
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'phone'     => $request->phone,
+            'password'  => $request->password,
+            'role'      => 'restaurant_user',
+            'parent_id' => auth()->id(),
+            'status'    => 'active',
+        ]);
+
+        return redirect()->route('staff.index')->with('success', 'Staff member added successfully.');
+    }
+
+    public function staffEdit($id)
+    {
+        $staff = User::where('parent_id', auth()->id())
+            ->where('role', 'restaurant_user')
+            ->findOrFail($id);
+
+        return view('backend.staff.edit', compact('staff'));
+    }
+
+    public function staffUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'email'  => 'required|email|unique:users,email,' . $id,
+            'phone'  => 'required|unique:users,phone,' . $id,
+        ]);
+
+        $staff = User::where('parent_id', auth()->id())
+            ->where('role', 'restaurant_user')
+            ->findOrFail($id);
+
+        $staff->update([
+            'name'   => $request->name,
+            'email'  => $request->email,
+            'phone'  => $request->phone,
+        ]);
+
+        return redirect()->route('staff.index')->with('success', 'Staff member updated successfully.');
+    }
+
+    public function staffDestroy($id)
+    {
+        $staff = User::where('parent_id', auth()->id())
+            ->where('role', 'restaurant_user')
+            ->findOrFail($id);
+
+        $staff->delete();
+
+        return redirect()->route('staff.index')->with('success', 'Staff member deleted successfully.');
+    }
+
     public function menu($token)
     {
         $table = table::where('qr_token', $token)->firstOrFail();

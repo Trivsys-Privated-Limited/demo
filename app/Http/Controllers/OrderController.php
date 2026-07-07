@@ -120,7 +120,7 @@ class OrderController extends Controller
             return response()->json($orders);
         }
 
-        return view('backend.kichan', compact('orders'));
+        return view('backend.kitchen', compact('orders'));
     }
 
     public function updateStatus(Request $request)
@@ -162,15 +162,15 @@ class OrderController extends Controller
         ]);
     }
 
-    public function show($orderNumber)
+    public function show($order)
     {
         $orders = order::with(['item', 'table', 'guest'])
-            ->where('order_number', $orderNumber)
+            ->where('order_number', $order)
             ->get();
         return response()->json($orders);
     }
 
-    public function invoice($order)
+   /* public function invoice($order)
     {
         $orders = order::with(['table', 'item', 'guest'])
             ->where('order_number', $order)
@@ -180,6 +180,25 @@ class OrderController extends Controller
         }
 
         $pdf = Pdf::loadView('backend.invoice', compact('orders'));
+        return $pdf->stream("Invoice_{$order}.pdf");
+    } */
+
+   public function invoice($order)
+    {
+        $orders = order::with(['table', 'item', 'guest'])
+            ->where('order_number', $order)
+            ->get();
+            
+        if ($orders->isEmpty()) {
+            abort(404, 'Order not found');
+        }
+
+        // 226.8 points = 80mm (Standard thermal printer size)
+        $customPaper = array(0, 0, 226.8, 650.00);
+
+        $pdf = Pdf::loadView('backend.invoice', compact('orders'))
+                  ->setPaper($customPaper);
+
         return $pdf->stream("Invoice_{$order}.pdf");
     }
 }

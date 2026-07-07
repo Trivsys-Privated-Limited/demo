@@ -62,7 +62,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="{{ route('users.edit', $user->id) }}"
+                                            <a href="{{ route('users.edit_password', $user->id) }}"
                                                 class="btn btn-sm btn-primary">Update Password</a>
                                             <a href="{{ route('users.edit', $user->id) }}"
                                                 class="btn btn-sm btn-info">Edit</a>

@@ -11,12 +11,12 @@
         <div class="sidebar">
             <!-- Sidebar user panel (optional) -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-                <div class="image">
+                <!-- <div class="image">
                     <img src="{{ asset('admin/dist/img/user2-160x160.jpg') }}" class="img-circle elevation-2"
                         alt="User Image">
-                </div>
+                </div> -->
                 <div class="info">
-                    <a href="#" class="d-block">Alexander Pierce</a>
+                    <a href="#" class="d-block">ScanDine</a>
                 </div>
             </div>
 
@@ -44,52 +44,106 @@
                             <i class="nav-icon fas fa-tachometer-alt"></i>
                             <p>
                                 Dashboard
-                                {{-- <i class="right fas fa-angle-left"></i> --}}
                             </p>
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="{{ route('users.index') }}" class="nav-link">
-                            <img class="w-[50px] nav-icon" src="{{asset('icon/user.png')}}" alt="">
-                            <p>All User</p>
-                        </a>
-                    </li>
+                    {{-- SUPER ADMIN MENU --}}
+                    @if(auth()->user()->isSuperAdmin())
+                        <li class="nav-item">
+                            <a href="{{ route('users.index') }}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/user.png')}}" alt="">
+                                <p>Manage Restaurants</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{{ route('items.index') }}" class="nav-link">
-                             <img class="w-[50px] nav-icon" src="{{asset('icon/item.png')}}" alt="">
-                            <p>Menu Items</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{{ route('orders.index') }}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/order.png')}}" alt="">
+                                <p>All Orders</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{{ route('tables.index') }}" class="nav-link">
-                          <img class="w-[50px] nav-icon" src="{{asset('icon/table.png')}}" alt="">
-                            <p>Manage Table</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{{ route('reports.index') }}" class="nav-link">
+                                <i class="nav-icon fas fa-chart-line text-info"></i>
+                                <p>Reports</p>
+                            </a>
+                        </li>
+                        {{-- Inbox Messages Link for Super Admin --}}
 
-                    <li class="nav-item">
-                        <a href="{{ route('orders.kichan') }}" class="nav-link">
-                          <img class="w-[50px] nav-icon" src="{{asset('icon/kichan.png')}}" alt="">
-                            <p>Manage Kitchen</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                           <a href="{{ route('contact.index') }}" class="nav-link">
+                               <i class="nav-icon fas fa-inbox text-warning"></i>
+                               <p>Inbox</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{{ route('orders.index') }}" class="nav-link">
-                          <img class="w-[50px] nav-icon" src="{{asset('icon/order.png')}}" alt="">
-                            <p>Manage Order</p>
-                        </a>
-                    </li>
+                    @endif
 
-                    <li class="nav-item">
-                        <a href="{{ route('reports.index') }}" class="nav-link">
-                          <i class="nav-icon fas fa-chart-line text-info"></i>
-                            <p>Sales Report</p>
-                        </a>
-                    </li>
+                    {{-- RESTAURANT ADMIN MENU --}}
+                    @if(auth()->user()->isRestaurantAdmin())
+                        <li class="nav-item">
+                            <a href="{{ route('items.index') }}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/item.png')}}" alt="">
+                                <p>Menu Items</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('tables.index') }}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/table.png')}}" alt="">
+                                <p>Manage Tables</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('orders.index') }}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/order.png')}}" alt="">
+                                <p>Orders</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('staff.index') }}" class="nav-link">
+                                <i class="nav-icon fas fa-users text-success"></i>
+                                <p>Kitchen Staff</p>
+                            </a>
+                        </li>
+                        {{-- Restaurant Admin ke block ke andar Kitchen Staff ke niche yeh dalein --}}
+                       <li class="nav-item">
+                           <a href="{{ route('contact.create') }}" class="nav-link">
+                               <i class="nav-icon fas fa-envelope text-primary"></i>
+                               <p>Contact Admin</p>
+                           </a>
+                        </li>
+
+                        <li class="nav-item">
+                          <a href="{{ route('contact.index') }}" class="nav-link">
+                             <i class="nav-icon fas fa-inbox text-warning"></i>
+                               <p>Inbox</p>
+                         </a>
+                      </li>
+                    @endif
+
+                    {{-- KITCHEN STAFF MENU --}}
+                    @if(auth()->user()->isRestaurantUser())
+                        <li class="nav-item">
+                            <a href="{{ route('orders.kitchen') }}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/kitchen.png')}}" alt="">
+                                <p>Kitchen Orders</p>
+                            </a>
+                        </li>
+                        {{-- Kitchen Staff ke block ke andar Kitchen Orders ke niche yeh dalein --}}
+                        <li class="nav-item">
+                           <a href="{{ route('contact.create') }}" class="nav-link">
+                              <i class="nav-icon fas fa-envelope text-primary"></i>
+                                <p>Contact Admin</p>
+                           </a>
+                        </li>
+                        
+                    @endif
+
 
                     <li class="nav-item">
                         <a href="{{route('logout')}}" class="nav-link">

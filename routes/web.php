@@ -11,54 +11,132 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\ContactController;
 
 Route::middleware([auth::class])->group(function () {
     Route::controller(dashboardController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard.index');
     });
-// Reports Routes
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/download', [ReportController::class, 'download'])->name('reports.download');
+    
+    // ============================================
+    // SUPER ADMIN ONLY ROUTES
+    // ============================================
+    Route::middleware('role:super_admin')->group(function () {
+        // User Management (Restaurants)
+        Route::controller(userController::class)->group(function () {
+            Route::get('/users', 'index')->name('users.index');
+            Route::get('/users/create', 'create')->name('users.create');
+            Route::post('/users', 'store')->name('users.store');
+            Route::get('/users/{id}/edit', 'edit')->name('users.edit');
+            Route::post('/users/{id}', 'update')->name('users.update');
+            Route::delete('/users/{id}', 'destroy')->name('users.destroy');
+            Route::get('/users/{id}/edit-password', 'editPassword')->name('users.edit_password');
+            Route::post('/users/{id}/update-password', 'updatePassword')->name('users.update_password');
+        });
 
-// User Routes
-    Route::controller(userController::class)->group(function () {
-        Route::get('/users', 'index')->name('users.index');
-        Route::get('/users/create', 'create')->name('users.create');
-        Route::post('/users', 'store')->name('users.store');
-        Route::get('/users/{id}/edit', 'edit')->name('users.edit');
-        Route::post('/users/{id}', 'update')->name('users.update');
-        Route::get('/users/{id}', 'destroy')->name('users.destroy');
-        Route::get('/admin/menu/{token}', 'menu')->name('users.menu');
+        // Subscription Management (Super Admin)
+        Route::controller(SubscriptionController::class)->group(function () {
+            Route::get('/users/{userId}/subscriptions', 'index')->name('subscriptions.index');
+            Route::get('/users/{userId}/subscriptions/create', 'create')->name('subscriptions.create');
+            Route::post('/users/{userId}/subscriptions', 'store')->name('subscriptions.store');
+            Route::delete('/subscriptions/{id}', 'destroy')->name('subscriptions.destroy');
+        });
+
+        // Reports
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/download', [ReportController::class, 'download'])->name('reports.download');
     });
 
-    // Items Routes
-    Route::controller(itmeController::class)->group(function () {
-        Route::get('/items', 'index')->name('items.index');
-        Route::get('/items/create', 'create')->name('items.create');
-        Route::post('/items', 'store')->name('items.store');
-        Route::get('/items/{id}/edit', 'edit')->name('items.edit');
-        Route::post('/items/{id}', 'update')->name('items.update');
-        Route::delete('/items/{id}', 'destroy')->name('items.destroy');
+    // ============================================
+    // RESTAURANT ADMIN ROUTES
+    // ============================================
+    Route::middleware('role:restaurant_admin')->group(function () {
+        // Items Routes
+        Route::controller(itmeController::class)->group(function () {
+            Route::get('/items', 'index')->name('items.index');
+            Route::get('/items/create', 'create')->name('items.create');
+            Route::post('/items', 'store')->name('items.store');
+            Route::get('/items/{id}/edit', 'edit')->name('items.edit');
+            Route::post('/items/{id}', 'update')->name('items.update');
+            Route::delete('/items/{id}', 'destroy')->name('items.destroy');
+        });
+
+        // Tables Routes
+        Route::controller(TableController::class)->group(function () {
+            Route::get('/tables', 'index')->name('tables.index');
+            Route::get('/tables/create', 'create')->name('tables.create');
+            Route::post('/tables', 'store')->name('tables.store');
+            Route::get('/tables/{id}/edit', 'edit')->name('tables.edit');
+            Route::post('/tables/{id}', 'update')->name('tables.update');
+            Route::delete('/tables/{id}', 'destroy')->name('tables.destroy');
+        });
+
+        // Staff Management
+        Route::controller(userController::class)->group(function () {
+            Route::get('/staff', 'staffIndex')->name('staff.index');
+            Route::get('/staff/create', 'staffCreate')->name('staff.create');
+            Route::post('/staff', 'staffStore')->name('staff.store');
+            Route::get('/staff/{id}/edit', 'staffEdit')->name('staff.edit');
+            Route::post('/staff/{id}', 'staffUpdate')->name('staff.update');
+            Route::delete('/staff/{id}', 'staffDestroy')->name('staff.destroy');
+        });
     });
 
-    // Tables Routes
-    Route::controller(TableController::class)->group(function () {
-        Route::get('/tables', 'index')->name('tables.index');
-        Route::get('/tables/create', 'create')->name('tables.create');
-        Route::post('/tables', 'store')->name('tables.store');
-        Route::get('/tables/{id}/edit', 'edit')->name('tables.edit');
-        Route::post('/tables/{id}', 'update')->name('tables.update');
-        Route::delete('/tables/{id}', 'destroy')->name('tables.destroy');
+    // ============================================
+    // ACCESSIBLE BY BOTH ADMIN & RESTAURANT ADMIN
+    // ============================================
+   /* Route::middleware('role:super_admin,restaurant_admin')->group(function () {
+        // Orders Routes
+        Route::controller(OrderController::class)->group(function () {
+            Route::get('/orders', 'index')->name('orders.index');
+            Route::get('/orders/{order}', 'show')->name('orders.show');
+            Route::get('orders/{order}/invoice', 'invoice')->name('orders.invoice');
+            Route::post('/kitchen/update-status', 'updateStatus')->name('orders.updateStatus');
+        });
+    }); */
+
+    //////// NEW  CODE ///////////
+
+    // ============================================
+    // ACCESSIBLE BY BOTH ADMIN & RESTAURANT ADMIN
+    // ============================================
+    Route::middleware('role:super_admin,restaurant_admin')->group(function () {
+        Route::controller(OrderController::class)->group(function () {
+            Route::get('/orders', 'index')->name('orders.index');
+        });
     });
 
-    // Orders Routes
-    Route::controller(OrderController::class)->group(function () {
-        Route::get('/orders', 'index')->name('orders.index');
-        // Route::post('/orders', 'store')->name('orders.store');
-        Route::get('/kichan', 'kitchen')->name('orders.kichan');
-        Route::get('/orders/{order}', 'show')->name('orders.show');
-        Route::get('orders/{order}/invoice', 'invoice')->name('orders.invoice');
-        Route::post('/kitchen/update-status', 'updateStatus')->name('orders.updateStatus');
+    // ============================================
+    // SHARED ROUTES (Admins + Kitchen Staff)
+    // ============================================
+    Route::middleware('role:super_admin,restaurant_admin,restaurant_user')->group(function () {
+        Route::controller(OrderController::class)->group(function () {
+            // Yahan humne restaurant_user ko permission de di hai
+            Route::get('/orders/{order}', 'show')->name('orders.show');
+            Route::get('orders/{order}/invoice', 'invoice')->name('orders.invoice');
+            Route::post('/kitchen/update-status', 'updateStatus')->name('orders.updateStatus');
+        });
+    
+        // ======== CONTACT & INBOX ROUTES ========
+        Route::controller(ContactController::class)->group(function () {
+            Route::get('/contact', 'create')->name('contact.create');
+            Route::post('/contact', 'store')->name('contact.store');
+            Route::get('/inbox', 'index')->name('contact.index');
+        });
+        // ========================================
+    });
+    
+    /////// END CODE  ///////////
+
+    // ============================================
+    // RESTAURANT USER ROUTES (Kitchen Staff)
+    // ============================================
+    Route::middleware('role:restaurant_user')->group(function () {
+        Route::controller(OrderController::class)->group(function () {
+            Route::get('/kitchen', 'kitchen')->name('orders.kitchen');
+            Route::post('/kitchen/update-status', 'updateStatus')->name('orders.updateStatus');
+        });
     });
 });
 

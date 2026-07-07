@@ -4,229 +4,466 @@
 
 @section('home')
     <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
+        <!-- Content Header -->
         <div class="content-header">
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Dashboard</h1>
-                    </div><!-- /.col -->
+                        @if(auth()->user()->isSuperAdmin())
+                            <h1 class="m-0">
+                                <i class="fas fa-crown text-warning mr-2"></i> Super Admin Dashboard
+                            </h1>
+                        @elseif(auth()->user()->isRestaurantAdmin())
+                            <h1 class="m-0">
+                                <i class="fas fa-store text-primary mr-2"></i> {{ auth()->user()->bussiness_name ?? auth()->user()->name }} — Dashboard
+                            </h1>
+                        @else
+                            <h1 class="m-0">
+                                <i class="fas fa-utensils text-info mr-2"></i> Kitchen — {{ auth()->user()->name }}
+                            </h1>
+                        @endif
+                    </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="#">Home</a></li>
-                            <li class="breadcrumb-item active">Dashboard v1</li>
-                            <li class="breadcrumb-item"><a href="{{route('logout')}}">logout</a></li>
-
+                            <li class="breadcrumb-item active">Dashboard</li>
                         </ol>
-                    </div><!-- /.col -->
-                </div><!-- /.row -->
-            </div><!-- /.container-fluid -->
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- /.content-header -->
 
-        <!-- Main content -->
         <section class="content">
             <div class="container-fluid">
-                <!-- Small boxes (Stat box) -->
-                <div class="row">
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-info">
-                            <div class="inner">
-                                <h3>{{ $totalOrders }}</h3>
 
-                                <p>Total Orders</p>
+                {{-- ================================================================
+                     ADMIN/SUPER ADMIN DASHBOARD
+                ================================================================ --}}
+                @if(auth()->user()->isSuperAdmin())
+
+                    {{-- Admin Stat Boxes --}}
+                    <div class="row">
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>{{ $totalUsers }}</h3>
+                                    <p>Total Restaurants</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-store"></i></div>
+                                <a href="{{ route('users.index') }}" class="small-box-footer">Manage <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
-                            <div class="icon">
-                                <i class="ion ion-bag"></i>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3>{{ $totalOrders }}</h3>
+                                    <p>Total Orders</p>
+                                </div>
+                                <div class="icon"><i class="ion ion-bag"></i></div>
+                                <a href="{{ route('orders.index') }}" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
-                            <a href="{{ route('orders.index') }}" class="small-box-footer">More info <i
-                                    class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>Rs {{ number_format($todayRevenue, 0) }}</h3>
+                                    <p>Today's Revenue</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-coins"></i></div>
+                                <a href="#" class="small-box-footer">All Restaurants <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3>{{ $pendingOrders }}</h3>
+                                    <p>Pending Orders</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+                                <a href="{{ route('orders.index') }}" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
                         </div>
                     </div>
-                    <!-- ./col -->
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-success">
-                            <div class="inner">
-                                <h3>{{ $totalItems }}</h3>
+                    <!-- /.row -->
 
-                                <p>Menu Items</p>
+                    {{-- Revenue Chart (Admin - All Restaurants) --}}
+                    <div class="row mt-2">
+                        <div class="col-lg-8">
+                            <div class="card card-primary card-outline">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h3 class="card-title">
+                                            <i class="fas fa-chart-line mr-2"></i> Overall Revenue Trend
+                                        </h3>
+                                        <p class="text-sm text-muted mb-0">All restaurants combined</p>
+                                    </div>
+                                    <form method="GET" action="{{ route('dashboard.index') }}">
+                                        <select name="filter" class="form-control form-control-sm" onchange="this.form.submit()">
+                                            <option value="today" {{ $filter=='today' ? 'selected' : '' }}>Today</option>
+                                            <option value="week"  {{ $filter=='week'  ? 'selected' : '' }}>Last 7 Days</option>
+                                            <option value="month" {{ $filter=='month' ? 'selected' : '' }}>Last 30 Days</option>
+                                            <option value="year"  {{ $filter=='year'  ? 'selected' : '' }}>This Year</option>
+                                            <option value="all"   {{ $filter=='all'   ? 'selected' : '' }}>All Time</option>
+                                        </select>
+                                    </form>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="salesAnalyticsChart" height="260"></canvas>
+                                </div>
                             </div>
-                            <div class="icon">
-                                <i class="ion ion-stats-bars"></i>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="card card-success card-outline">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-money-bill-wave mr-2"></i> Revenue Summary</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-box bg-white mb-3 shadow-sm">
+                                        <span class="info-box-icon bg-success"><i class="fas fa-coins"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Today's Revenue</span>
+                                            <span class="info-box-number">Rs {{ number_format($todayRevenue, 2) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-box bg-white mb-3 shadow-sm">
+                                        <span class="info-box-icon bg-info"><i class="fas fa-calendar-alt"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">This Month Revenue</span>
+                                            <span class="info-box-number">Rs {{ number_format($thisMonthRevenue, 2) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-box bg-white shadow-sm">
+                                        <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Pending Orders</span>
+                                            <span class="info-box-number">{{ $pendingOrders }}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <a href="{{ route('items.index') }}" class="small-box-footer">More info <i
-                                    class="fas fa-arrow-circle-right"></i></a>
                         </div>
                     </div>
-                    <!-- ./col -->
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-warning">
-                            <div class="inner">
-                                <h3>{{ $totalUsers }}</h3>
 
-                                <p>Total Users</p>
-                            </div>
-                            <div class="icon">
-                                <i class="ion ion-person-add"></i>
-                            </div>
-                            <a href="{{ route('users.index') }}" class="small-box-footer">More info <i
-                                    class="fas fa-arrow-circle-right"></i></a>
-                        </div>
-                    </div>
-                    <!-- ./col -->
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-danger">
-                            <div class="inner">
-                                <h3>{{ $totalTables }}</h3>
-
-                                <p>Total Tables</p>
-                            </div>
-                            <div class="icon">
-                                <i class="ion ion-pie-graph"></i>
-                            </div>
-                            <a href="{{ route('tables.index') }}" class="small-box-footer">More info <i
-                                    class="fas fa-arrow-circle-right"></i></a>
-                        </div>
-                    </div>
-                    <!-- ./col -->
-                </div>
-                <!-- /.row -->
-
-                <div class="row mt-4">
-                    <div class="col-lg-8">
-                        <div class="card card-primary card-outline">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <div>
+                    {{-- Restaurants Table --}}
+                    <div class="row mt-2">
+                        <div class="col-lg-12">
+                            <div class="card card-dark card-outline">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h3 class="card-title">
-                                        <i class="fas fa-chart-line mr-2"></i>
-                                        Sales Revenue Trend
+                                        <i class="fas fa-store mr-2"></i> All Restaurants Overview
                                     </h3>
-                                    <p class="text-sm text-muted mb-0">Revenue performance</p>
+                                    <a href="{{ route('users.create') }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus mr-1"></i> Add Restaurant
+                                    </a>
                                 </div>
-                               <!--<div class="badge badge-pill badge-secondary py-2 px-3">Updated now</div> !-->
-
-                                 <!-- New filter start !-->
-
-<form method="GET" action="{{ route('dashboard.index') }}">
-    <select name="filter" class="form-control form-control-sm" onchange="this.form.submit()">
-
-        <option value="today" {{ $filter=='today' ? 'selected' : '' }}>
-            Today
-        </option>
-
-        <option value="week" {{ $filter=='week' ? 'selected' : '' }}>
-            Last 7 Days
-        </option>
-
-        <option value="month" {{ $filter=='month' ? 'selected' : '' }}>
-            Last 30 Days
-        </option>
-
-        <option value="year" {{ $filter=='year' ? 'selected' : '' }}>
-            This Year
-        </option>
-
-        <option value="all" {{ $filter=='all' ? 'selected' : '' }}>
-            All Time
-        </option>
-
-    </select>
-</form>
-
-                               <!-- new filter end !-->
-
-                            </div>
-                            <div class="card-body">
-                                <canvas id="salesAnalyticsChart" height="280"></canvas>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover table-striped mb-0">
+                                            <thead class="thead-dark">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Business Name</th>
+                                                    <th>Owner</th>
+                                                    <th>Phone</th>
+                                                    <th class="text-center">Tables</th>
+                                                    <th class="text-center">Orders</th>
+                                                    <th class="text-right">Revenue</th>
+                                                    <th class="text-center">Subscription Expiry</th>
+                                                    <th class="text-center">Status</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($restaurants as $index => $restaurant)
+                                                    @php
+                                                        $activeSub = $restaurant->subscriptions
+                                                            ->where('status', 'active')
+                                                            ->where('end_date', '>=', \Carbon\Carbon::today())
+                                                            ->sortByDesc('end_date')
+                                                            ->first();
+                                                        $daysLeft = $activeSub ? \Carbon\Carbon::today()->diffInDays($activeSub->end_date) : 0;
+                                                    @endphp
+                                                    <tr class="{{ !$activeSub && $restaurant->status === 'active' ? 'table-warning' : ($restaurant->status === 'inactive' ? 'table-danger' : '') }}">
+                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>
+                                                            <strong>{{ $restaurant->bussiness_name ?? '—' }}</strong><br>
+                                                            <small class="text-muted">{{ $restaurant->email }}</small>
+                                                        </td>
+                                                        <td>{{ $restaurant->name }}</td>
+                                                        <td>{{ $restaurant->phone }}</td>
+                                                        <td class="text-center">
+                                                            <span class="badge badge-info">{{ $restaurant->stats['tables'] }}</span><br>
+                                                            <small class="text-muted">{{ $restaurant->stats['total_orders'] }} orders</small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span class="badge badge-primary">{{ $restaurant->stats['total_orders'] }}</span><br>
+                                                            <small class="text-muted">Today: {{ $restaurant->stats['today_orders'] }}</small>
+                                                        </td>
+                                                        <td class="text-right">
+                                                            <strong>Rs {{ number_format($restaurant->stats['revenue'], 0) }}</strong>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if($activeSub)
+                                                                <div>
+                                                                    <small class="text-muted">Expires:</small><br>
+                                                                    <strong>{{ $activeSub->end_date->format('d M Y') }}</strong><br>
+                                                                    @if($daysLeft > 7)
+                                                                        <span class="badge badge-success">{{ $daysLeft }} days left</span>
+                                                                    @elseif($daysLeft > 0)
+                                                                        <span class="badge badge-warning">⚠ {{ $daysLeft }} days left</span>
+                                                                    @else
+                                                                        <span class="badge badge-danger">Expires Today!</span>
+                                                                    @endif
+                                                                </div>
+                                                            @else
+                                                                <span class="badge badge-secondary">No Subscription</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if($restaurant->status === 'active')
+                                                                <span class="badge badge-success px-2 py-1">Active</span>
+                                                            @else
+                                                                <span class="badge badge-danger px-2 py-1">Inactive</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-center" style="white-space:nowrap;">
+                                                            <a href="{{ route('subscriptions.index', $restaurant->id) }}" class="btn btn-xs btn-success mb-1" title="Manage Subscription">
+                                                                <i class="fas fa-receipt"></i> Subscription
+                                                            </a><br>
+                                                            <a href="{{ route('users.edit', $restaurant->id) }}" class="btn btn-xs btn-info" title="Edit">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a href="{{ route('users.edit_password', $restaurant->id) }}" class="btn btn-xs btn-warning" title="Update Password">
+                                                                <i class="fas fa-key"></i>
+                                                            </a>
+                                                            <a href="{{ route('users.destroy', $restaurant->id) }}" class="btn btn-xs btn-danger" title="Delete"
+                                                                onclick="return confirm('Are you sure you want to delete this restaurant?')">
+                                                                <i class="fas fa-trash"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="12" class="text-center text-muted py-4">
+                                                            No restaurant users found.
+                                                            <a href="{{ route('users.create') }}">Add one now</a>
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-4">
-                        <div class="card card-success card-outline mb-3">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-money-bill-wave mr-2"></i>
-                                    Revenue Summary
-                                </h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="info-box bg-white mb-3 shadow-sm">
-                                    <span class="info-box-icon bg-success"><i class="fas fa-coins"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Today's Revenue</span>
-                                        <span class="info-box-number">Rs {{ number_format($todayRevenue, 2) }}</span>
-                                    </div>
+                {{-- ================================================================
+                     RESTAURANT ADMIN DASHBOARD
+                ================================================================ --}}
+                @elseif(auth()->user()->isRestaurantAdmin())
+
+                    {{-- Restaurant Stat Boxes --}}
+                    <div class="row">
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>{{ $totalOrders }}</h3>
+                                    <p>My Total Orders</p>
                                 </div>
-                                <div class="info-box bg-white mb-3 shadow-sm">
-                                    <span class="info-box-icon bg-info"><i class="fas fa-calendar-alt"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">This Month Revenue</span>
-                                        <span class="info-box-number">Rs {{ number_format($thisMonthRevenue, 2) }}</span>
-                                    </div>
-                                </div>
-                                <div class="info-box bg-white shadow-sm">
-                                    <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Pending Orders</span>
-                                        <span class="info-box-number">{{ $pendingOrders }}</span>
-                                    </div>
-                                </div>
+                                <div class="icon"><i class="ion ion-bag"></i></div>
+                                <a href="{{ route('orders.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
 
-                        <div class="card card-warning card-outline">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-chart-pie mr-2"></i>
-                                    Top Items Share
-                                </h3>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="topItemsPieChart" height="240"></canvas>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3>{{ $totalItems }}</h3>
+                                    <p>My Menu Items</p>
+                                </div>
+                                <div class="icon"><i class="ion ion-stats-bars"></i></div>
+                                <a href="{{ route('items.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card card-light card-outline">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-utensils mr-2"></i>
-                                    Top Selling Items
-                                </h3>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>{{ $totalTables }}</h3>
+                                    <p>My Tables</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-chair"></i></div>
+                                <a href="{{ route('tables.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
-                            <div class="card-body p-0">
-                                <ul class="list-group list-group-flush">
-                                    @forelse($topItems as $itemData)
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>{{ $itemData->item->name ?? 'Deleted Item' }}</strong>
-                                                <div class="text-muted text-sm">Sold {{ $itemData->total_qty }} times</div>
-                                            </div>
-                                            <span class="badge badge-pill badge-primary">{{ $itemData->total_qty }}</span>
-                                        </li>
-                                    @empty
-                                        <li class="list-group-item">No sales recorded yet.</li>
-                                    @endforelse
-                                </ul>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3>{{ $pendingOrders }}</h3>
+                                    <p>Pending Orders</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+                                <a href="{{ route('orders.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                    {{-- Revenue Chart + Summary --}}
+                    <div class="row mt-4">
+                        <div class="col-lg-8">
+                            <div class="card card-primary card-outline">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h3 class="card-title"><i class="fas fa-chart-line mr-2"></i> Sales Revenue Trend</h3>
+                                        <p class="text-sm text-muted mb-0">Your restaurant's revenue performance</p>
+                                    </div>
+                                    <form method="GET" action="{{ route('dashboard.index') }}">
+                                        <select name="filter" class="form-control form-control-sm" onchange="this.form.submit()">
+                                            <option value="today" {{ $filter=='today' ? 'selected' : '' }}>Today</option>
+                                            <option value="week"  {{ $filter=='week'  ? 'selected' : '' }}>Last 7 Days</option>
+                                            <option value="month" {{ $filter=='month' ? 'selected' : '' }}>Last 30 Days</option>
+                                            <option value="year"  {{ $filter=='year'  ? 'selected' : '' }}>This Year</option>
+                                            <option value="all"   {{ $filter=='all'   ? 'selected' : '' }}>All Time</option>
+                                        </select>
+                                    </form>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="salesAnalyticsChart" height="280"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="card card-success card-outline mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-money-bill-wave mr-2"></i> Revenue Summary</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-box bg-white mb-3 shadow-sm">
+                                        <span class="info-box-icon bg-success"><i class="fas fa-coins"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Today's Revenue</span>
+                                            <span class="info-box-number">Rs {{ number_format($todayRevenue, 2) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-box bg-white mb-3 shadow-sm">
+                                        <span class="info-box-icon bg-info"><i class="fas fa-calendar-alt"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">This Month Revenue</span>
+                                            <span class="info-box-number">Rs {{ number_format($thisMonthRevenue, 2) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-box bg-white shadow-sm">
+                                        <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Pending Orders</span>
+                                            <span class="info-box-number">{{ $pendingOrders }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card card-warning card-outline">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-chart-pie mr-2"></i> Top Items Share</h3>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="topItemsPieChart" height="240"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Top Selling Items --}}
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card card-light card-outline">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-utensils mr-2"></i> Top Selling Items</h3>
+                                </div>
+                                <div class="card-body p-0">
+                                    <ul class="list-group list-group-flush">
+                                        @forelse($topItems as $itemData)
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $itemData->item->name ?? 'Deleted Item' }}</strong>
+                                                    <div class="text-muted text-sm">Sold {{ $itemData->total_qty }} times</div>
+                                                </div>
+                                                <span class="badge badge-pill badge-primary">{{ $itemData->total_qty }}</span>
+                                            </li>
+                                        @empty
+                                            <li class="list-group-item">No sales recorded yet.</li>
+                                        @endforelse
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {{-- ================================================================
+                     KITCHEN STAFF DASHBOARD
+                ================================================================ --}}
+                @else
+
+                    {{-- Limited Kitchen View --}}
+                    <div class="row">
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>{{ $totalOrders }}</h3>
+                                    <p>Today's Orders</p>
+                                </div>
+                                <div class="icon"><i class="ion ion-bag"></i></div>
+                                <a href="{{ route('orders.kitchen') }}" class="small-box-footer">Go to Kitchen <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>{{ $pendingOrders }}</h3>
+                                    <p>Pending Orders</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+                                <a href="{{ route('orders.kitchen') }}" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3>Rs {{ number_format($todayRevenue, 0) }}</h3>
+                                    <p>Today's Revenue</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-coins"></i></div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3>Rs {{ number_format($thisMonthRevenue, 0) }}</h3>
+                                    <p>This Month Revenue</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                @endif
+
+                {{-- Charts Script --}}
                 @push('scripts')
                     <script>
-                        const analyticsLabels = @json($analyticsLabels);
+                        const analyticsLabels  = @json($analyticsLabels);
                         const analyticsRevenue = @json($analyticsRevenue);
-                        const topItemsLabels = @json($topItemsLabels);
-                        const topItemsQty = @json($topItemsQty);
 
                         if (typeof Chart !== 'undefined') {
                             const lineCtx = document.getElementById('salesAnalyticsChart');
@@ -252,39 +489,27 @@
                                         responsive: true,
                                         maintainAspectRatio: false,
                                         plugins: {
-                                            legend: {
-                                                display: true,
-                                                position: 'top',
-                                                labels: {
-                                                    color: '#333'
-                                                }
-                                            },
+                                            legend: { display: true, position: 'top', labels: { color: '#333' } },
                                             tooltip: {
                                                 callbacks: {
-                                                    label: function(context) {
-                                                        return 'Rs ' + context.formattedValue;
-                                                    }
+                                                    label: function(context) { return 'Rs ' + context.formattedValue; }
                                                 }
                                             }
                                         },
                                         scales: {
-                                            x: {
-                                                grid: { display: false },
-                                                ticks: { color: '#555' }
-                                            },
+                                            x: { grid: { display: false }, ticks: { color: '#555' } },
                                             y: {
                                                 beginAtZero: true,
-                                                ticks: {
-                                                    color: '#555',
-                                                    callback: function(value) {
-                                                        return 'Rs ' + value;
-                                                    }
-                                                }
+                                                ticks: { color: '#555', callback: function(value) { return 'Rs ' + value; } }
                                             }
                                         }
                                     }
                                 });
                             }
+
+                            @if(auth()->user()->isRestaurantAdmin())
+                            const topItemsLabels = @json($topItemsLabels ?? []);
+                            const topItemsQty    = @json($topItemsQty ?? []);
 
                             const pieCtx = document.getElementById('topItemsPieChart');
                             if (pieCtx) {
@@ -294,7 +519,7 @@
                                         labels: topItemsLabels,
                                         datasets: [{
                                             data: topItemsQty,
-                                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8', '#dc3545'],
+                                            backgroundColor: ['#007bff','#28a745','#ffc107','#17a2b8','#dc3545'],
                                             borderColor: '#ffffff',
                                             borderWidth: 2
                                         }]
@@ -303,16 +528,11 @@
                                         responsive: true,
                                         maintainAspectRatio: false,
                                         plugins: {
-                                            legend: {
-                                                position: 'bottom',
-                                                labels: { color: '#333' }
-                                            },
+                                            legend: { position: 'bottom', labels: { color: '#333' } },
                                             tooltip: {
                                                 callbacks: {
                                                     label: function(context) {
-                                                        const label = context.label || '';
-                                                        const value = context.formattedValue || 0;
-                                                        return label + ': ' + value + ' sold';
+                                                        return context.label + ': ' + context.formattedValue + ' sold';
                                                     }
                                                 }
                                             }
@@ -320,550 +540,12 @@
                                     }
                                 });
                             }
+                            @endif
                         }
                     </script>
                 @endpush
 
-                <!-- Main row -->
-                {{-- <div class="row">
-                    <!-- Left col -->
-                    <section class="col-lg-7 connectedSortable">
-                        <!-- Custom tabs (Charts with tabs)-->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-chart-pie mr-1"></i>
-                                    Sales
-                                </h3>
-                                <div class="card-tools">
-                                    <ul class="nav nav-pills ml-auto">
-                                        <li class="nav-item">
-                                            <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Area</a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="#sales-chart" data-toggle="tab">Donut</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div><!-- /.card-header -->
-                            <div class="card-body">
-                                <div class="tab-content p-0">
-                                    <!-- Morris chart - Sales -->
-                                    <div class="chart tab-pane active" id="revenue-chart"
-                                        style="position: relative; height: 300px;">
-                                        <canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>
-                                    </div>
-                                    <div class="chart tab-pane" id="sales-chart" style="position: relative; height: 300px;">
-                                        <canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>
-                                    </div>
-                                </div>
-                            </div><!-- /.card-body -->
-                        </div>
-                        <!-- /.card -->
-
-                        <!-- DIRECT CHAT -->
-                        <div class="card direct-chat direct-chat-primary">
-                            <div class="card-header">
-                                <h3 class="card-title">Direct Chat</h3>
-
-                                <div class="card-tools">
-                                    <span title="3 New Messages" class="badge badge-primary">3</span>
-                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-tool" title="Contacts"
-                                        data-widget="chat-pane-toggle">
-                                        <i class="fas fa-comments"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-tool" data-card-widget="remove">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- /.card-header -->
-                            <div class="card-body">
-                                <!-- Conversations are loaded here -->
-                                <div class="direct-chat-messages">
-                                    <!-- Message. Default to the left -->
-                                    <div class="direct-chat-msg">
-                                        <div class="direct-chat-infos clearfix">
-                                            <span class="direct-chat-name float-left">Alexander Pierce</span>
-                                            <span class="direct-chat-timestamp float-right">23 Jan 2:00 pm</span>
-                                        </div>
-                                        <!-- /.direct-chat-infos -->
-                                        <img class="direct-chat-img" src="dist/img/user1-128x128.jpg"
-                                            alt="message user image">
-                                        <!-- /.direct-chat-img -->
-                                        <div class="direct-chat-text">
-                                            Is this template really for free? That's unbelievable!
-                                        </div>
-                                        <!-- /.direct-chat-text -->
-                                    </div>
-                                    <!-- /.direct-chat-msg -->
-
-                                    <!-- Message to the right -->
-                                    <div class="direct-chat-msg right">
-                                        <div class="direct-chat-infos clearfix">
-                                            <span class="direct-chat-name float-right">Sarah Bullock</span>
-                                            <span class="direct-chat-timestamp float-left">23 Jan 2:05 pm</span>
-                                        </div>
-                                        <!-- /.direct-chat-infos -->
-                                        <img class="direct-chat-img" src="dist/img/user3-128x128.jpg"
-                                            alt="message user image">
-                                        <!-- /.direct-chat-img -->
-                                        <div class="direct-chat-text">
-                                            You better believe it!
-                                        </div>
-                                        <!-- /.direct-chat-text -->
-                                    </div>
-                                    <!-- /.direct-chat-msg -->
-
-                                    <!-- Message. Default to the left -->
-                                    <div class="direct-chat-msg">
-                                        <div class="direct-chat-infos clearfix">
-                                            <span class="direct-chat-name float-left">Alexander Pierce</span>
-                                            <span class="direct-chat-timestamp float-right">23 Jan 5:37 pm</span>
-                                        </div>
-                                        <!-- /.direct-chat-infos -->
-                                        <img class="direct-chat-img" src="dist/img/user1-128x128.jpg"
-                                            alt="message user image">
-                                        <!-- /.direct-chat-img -->
-                                        <div class="direct-chat-text">
-                                            Working with AdminLTE on a great new app! Wanna join?
-                                        </div>
-                                        <!-- /.direct-chat-text -->
-                                    </div>
-                                    <!-- /.direct-chat-msg -->
-
-                                    <!-- Message to the right -->
-                                    <div class="direct-chat-msg right">
-                                        <div class="direct-chat-infos clearfix">
-                                            <span class="direct-chat-name float-right">Sarah Bullock</span>
-                                            <span class="direct-chat-timestamp float-left">23 Jan 6:10 pm</span>
-                                        </div>
-                                        <!-- /.direct-chat-infos -->
-                                        <img class="direct-chat-img" src="dist/img/user3-128x128.jpg"
-                                            alt="message user image">
-                                        <!-- /.direct-chat-img -->
-                                        <div class="direct-chat-text">
-                                            I would love to.
-                                        </div>
-                                        <!-- /.direct-chat-text -->
-                                    </div>
-                                    <!-- /.direct-chat-msg -->
-
-                                </div>
-                                <!--/.direct-chat-messages-->
-
-                                <!-- Contacts are loaded here -->
-                                <div class="direct-chat-contacts">
-                                    <ul class="contacts-list">
-                                        <li>
-                                            <a href="#">
-                                                <img class="contacts-list-img" src="dist/img/user1-128x128.jpg"
-                                                    alt="User Avatar">
-
-                                                <div class="contacts-list-info">
-                                                    <span class="contacts-list-name">
-                                                        Count Dracula
-                                                        <small class="contacts-list-date float-right">2/28/2015</small>
-                                                    </span>
-                                                    <span class="contacts-list-msg">How have you been? I
-                                                        was...</span>
-                                                </div>
-                                                <!-- /.contacts-list-info -->
-                                            </a>
-                                        </li>
-                                        <!-- End Contact Item -->
-                                        <li>
-                                            <a href="#">
-                                                <img class="contacts-list-img" src="dist/img/user7-128x128.jpg"
-                                                    alt="User Avatar">
-
-                                                <div class="contacts-list-info">
-                                                    <span class="contacts-list-name">
-                                                        Sarah Doe
-                                                        <small class="contacts-list-date float-right">2/23/2015</small>
-                                                    </span>
-                                                    <span class="contacts-list-msg">I will be waiting for...</span>
-                                                </div>
-                                                <!-- /.contacts-list-info -->
-                                            </a>
-                                        </li>
-                                        <!-- End Contact Item -->
-                                        <li>
-                                            <a href="#">
-                                                <img class="contacts-list-img" src="dist/img/user3-128x128.jpg"
-                                                    alt="User Avatar">
-
-                                                <div class="contacts-list-info">
-                                                    <span class="contacts-list-name">
-                                                        Nadia Jolie
-                                                        <small class="contacts-list-date float-right">2/20/2015</small>
-                                                    </span>
-                                                    <span class="contacts-list-msg">I'll call you back at...</span>
-                                                </div>
-                                                <!-- /.contacts-list-info -->
-                                            </a>
-                                        </li>
-                                        <!-- End Contact Item -->
-                                        <li>
-                                            <a href="#">
-                                                <img class="contacts-list-img" src="dist/img/user5-128x128.jpg"
-                                                    alt="User Avatar">
-
-                                                <div class="contacts-list-info">
-                                                    <span class="contacts-list-name">
-                                                        Nora S. Vans
-                                                        <small class="contacts-list-date float-right">2/10/2015</small>
-                                                    </span>
-                                                    <span class="contacts-list-msg">Where is your new...</span>
-                                                </div>
-                                                <!-- /.contacts-list-info -->
-                                            </a>
-                                        </li>
-                                        <!-- End Contact Item -->
-                                        <li>
-                                            <a href="#">
-                                                <img class="contacts-list-img" src="dist/img/user6-128x128.jpg"
-                                                    alt="User Avatar">
-
-                                                <div class="contacts-list-info">
-                                                    <span class="contacts-list-name">
-                                                        John K.
-                                                        <small class="contacts-list-date float-right">1/27/2015</small>
-                                                    </span>
-                                                    <span class="contacts-list-msg">Can I take a look at...</span>
-                                                </div>
-                                                <!-- /.contacts-list-info -->
-                                            </a>
-                                        </li>
-                                        <!-- End Contact Item -->
-                                        <li>
-                                            <a href="#">
-                                                <img class="contacts-list-img" src="dist/img/user8-128x128.jpg"
-                                                    alt="User Avatar">
-
-                                                <div class="contacts-list-info">
-                                                    <span class="contacts-list-name">
-                                                        Kenneth M.
-                                                        <small class="contacts-list-date float-right">1/4/2015</small>
-                                                    </span>
-                                                    <span class="contacts-list-msg">Never mind I found...</span>
-                                                </div>
-                                                <!-- /.contacts-list-info -->
-                                            </a>
-                                        </li>
-                                        <!-- End Contact Item -->
-                                    </ul>
-                                    <!-- /.contacts-list -->
-                                </div>
-                                <!-- /.direct-chat-pane -->
-                            </div>
-                            <!-- /.card-body -->
-                            <div class="card-footer">
-                                <form action="#" method="post">
-                                    <div class="input-group">
-                                        <input type="text" name="message" placeholder="Type Message ..."
-                                            class="form-control">
-                                        <span class="input-group-append">
-                                            <button type="button" class="btn btn-primary">Send</button>
-                                        </span>
-                                    </div>
-                                </form>
-                            </div>
-                            <!-- /.card-footer-->
-                        </div>
-                        <!--/.direct-chat -->
-
-                        <!-- TO DO List -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="ion ion-clipboard mr-1"></i>
-                                    To Do List
-                                </h3>
-
-                                <div class="card-tools">
-                                    <ul class="pagination pagination-sm">
-                                        <li class="page-item"><a href="#" class="page-link">&laquo;</a>
-                                        </li>
-                                        <li class="page-item"><a href="#" class="page-link">1</a></li>
-                                        <li class="page-item"><a href="#" class="page-link">2</a></li>
-                                        <li class="page-item"><a href="#" class="page-link">3</a></li>
-                                        <li class="page-item"><a href="#" class="page-link">&raquo;</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <!-- /.card-header -->
-                            <div class="card-body">
-                                <ul class="todo-list" data-widget="todo-list">
-                                    <li>
-                                        <!-- drag handle -->
-                                        <span class="handle">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </span>
-                                        <!-- checkbox -->
-                                        <div class="icheck-primary d-inline ml-2">
-                                            <input type="checkbox" value="" name="todo1" id="todoCheck1">
-                                            <label for="todoCheck1"></label>
-                                        </div>
-                                        <!-- todo text -->
-                                        <span class="text">Design a nice theme</span>
-                                        <!-- Emphasis label -->
-                                        <small class="badge badge-danger"><i class="far fa-clock"></i> 2
-                                            mins</small>
-                                        <!-- General tools such as edit or delete-->
-                                        <div class="tools">
-                                            <i class="fas fa-edit"></i>
-                                            <i class="fas fa-trash-o"></i>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span class="handle">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </span>
-                                        <div class="icheck-primary d-inline ml-2">
-                                            <input type="checkbox" value="" name="todo2" id="todoCheck2"
-                                                checked>
-                                            <label for="todoCheck2"></label>
-                                        </div>
-                                        <span class="text">Make the theme responsive</span>
-                                        <small class="badge badge-info"><i class="far fa-clock"></i> 4
-                                            hours</small>
-                                        <div class="tools">
-                                            <i class="fas fa-edit"></i>
-                                            <i class="fas fa-trash-o"></i>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span class="handle">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </span>
-                                        <div class="icheck-primary d-inline ml-2">
-                                            <input type="checkbox" value="" name="todo3" id="todoCheck3">
-                                            <label for="todoCheck3"></label>
-                                        </div>
-                                        <span class="text">Let theme shine like a star</span>
-                                        <small class="badge badge-warning"><i class="far fa-clock"></i> 1
-                                            day</small>
-                                        <div class="tools">
-                                            <i class="fas fa-edit"></i>
-                                            <i class="fas fa-trash-o"></i>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span class="handle">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </span>
-                                        <div class="icheck-primary d-inline ml-2">
-                                            <input type="checkbox" value="" name="todo4" id="todoCheck4">
-                                            <label for="todoCheck4"></label>
-                                        </div>
-                                        <span class="text">Let theme shine like a star</span>
-                                        <small class="badge badge-success"><i class="far fa-clock"></i> 3
-                                            days</small>
-                                        <div class="tools">
-                                            <i class="fas fa-edit"></i>
-                                            <i class="fas fa-trash-o"></i>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span class="handle">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </span>
-                                        <div class="icheck-primary d-inline ml-2">
-                                            <input type="checkbox" value="" name="todo5" id="todoCheck5">
-                                            <label for="todoCheck5"></label>
-                                        </div>
-                                        <span class="text">Check your messages and notifications</span>
-                                        <small class="badge badge-primary"><i class="far fa-clock"></i> 1
-                                            week</small>
-                                        <div class="tools">
-                                            <i class="fas fa-edit"></i>
-                                            <i class="fas fa-trash-o"></i>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span class="handle">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </span>
-                                        <div class="icheck-primary d-inline ml-2">
-                                            <input type="checkbox" value="" name="todo6" id="todoCheck6">
-                                            <label for="todoCheck6"></label>
-                                        </div>
-                                        <span class="text">Let theme shine like a star</span>
-                                        <small class="badge badge-secondary"><i class="far fa-clock"></i> 1
-                                            month</small>
-                                        <div class="tools">
-                                            <i class="fas fa-edit"></i>
-                                            <i class="fas fa-trash-o"></i>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                            <!-- /.card-body -->
-                            <div class="card-footer clearfix">
-                                <button type="button" class="btn btn-primary float-right"><i class="fas fa-plus"></i>
-                                    Add item</button>
-                            </div>
-                        </div>
-                        <!-- /.card -->
-                    </section>
-                    <!-- /.Left col -->
-                    <!-- right col (We are only adding the ID to make the widgets sortable)-->
-                    <section class="col-lg-5 connectedSortable">
-                        <!-- Map card -->
-                        <div class="card bg-gradient-primary">
-                            <div class="card-header border-0">
-                                <h3 class="card-title">
-                                    <i class="fas fa-map-marker-alt mr-1"></i>
-                                    Visitors
-                                </h3>
-                                <!-- card tools -->
-                                <div class="card-tools">
-                                    <button type="button" class="btn btn-primary btn-sm daterange" title="Date range">
-                                        <i class="far fa-calendar-alt"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-primary btn-sm" data-card-widget="collapse"
-                                        title="Collapse">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                </div>
-                                <!-- /.card-tools -->
-                            </div>
-                            <div class="card-body">
-                                <div id="world-map" style="height: 250px; width: 100%;"></div>
-                            </div>
-                            <!-- /.card-body-->
-                            <div class="card-footer bg-transparent">
-                                <div class="row">
-                                    <div class="col-4 text-center">
-                                        <div id="sparkline-1"></div>
-                                        <div class="text-white">Visitors</div>
-                                    </div>
-                                    <!-- ./col -->
-                                    <div class="col-4 text-center">
-                                        <div id="sparkline-2"></div>
-                                        <div class="text-white">Online</div>
-                                    </div>
-                                    <!-- ./col -->
-                                    <div class="col-4 text-center">
-                                        <div id="sparkline-3"></div>
-                                        <div class="text-white">Sales</div>
-                                    </div>
-                                    <!-- ./col -->
-                                </div>
-                                <!-- /.row -->
-                            </div>
-                        </div>
-                        <!-- /.card -->
-
-                        <!-- solid sales graph -->
-                        <div class="card bg-gradient-info">
-                            <div class="card-header border-0">
-                                <h3 class="card-title">
-                                    <i class="fas fa-th mr-1"></i>
-                                    Sales Graph
-                                </h3>
-
-                                <div class="card-tools">
-                                    <button type="button" class="btn bg-info btn-sm" data-card-widget="collapse">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <button type="button" class="btn bg-info btn-sm" data-card-widget="remove">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <canvas class="chart" id="line-chart"
-                                    style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                            </div>
-                            <!-- /.card-body -->
-                            <div class="card-footer bg-transparent">
-                                <div class="row">
-                                    <div class="col-4 text-center">
-                                        <input type="text" class="knob" data-readonly="true" value="20"
-                                            data-width="60" data-height="60" data-fgColor="#39CCCC">
-
-                                        <div class="text-white">Mail-Orders</div>
-                                    </div>
-                                    <!-- ./col -->
-                                    <div class="col-4 text-center">
-                                        <input type="text" class="knob" data-readonly="true" value="50"
-                                            data-width="60" data-height="60" data-fgColor="#39CCCC">
-
-                                        <div class="text-white">Online</div>
-                                    </div>
-                                    <!-- ./col -->
-                                    <div class="col-4 text-center">
-                                        <input type="text" class="knob" data-readonly="true" value="30"
-                                            data-width="60" data-height="60" data-fgColor="#39CCCC">
-
-                                        <div class="text-white">In-Store</div>
-                                    </div>
-                                    <!-- ./col -->
-                                </div>
-                                <!-- /.row -->
-                            </div>
-                            <!-- /.card-footer -->
-                        </div>
-                        <!-- /.card -->
-
-                        <!-- Calendar -->
-                        <div class="card bg-gradient-success">
-                            <div class="card-header border-0">
-
-                                <h3 class="card-title">
-                                    <i class="far fa-calendar-alt"></i>
-                                    Calendar
-                                </h3>
-                                <!-- tools card -->
-                                <div class="card-tools">
-                                    <!-- button with a dropdown -->
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-success btn-sm dropdown-toggle"
-                                            data-toggle="dropdown" data-offset="-52">
-                                            <i class="fas fa-bars"></i>
-                                        </button>
-                                        <div class="dropdown-menu" role="menu">
-                                            <a href="#" class="dropdown-item">Add new event</a>
-                                            <a href="#" class="dropdown-item">Clear events</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a href="#" class="dropdown-item">View calendar</a>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-success btn-sm" data-card-widget="collapse">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-success btn-sm" data-card-widget="remove">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <!-- /. tools -->
-                            </div>
-                            <!-- /.card-header -->
-                            <div class="card-body pt-0">
-                                <!--The calendar -->
-                                <div id="calendar" style="width: 100%"></div>
-                            </div>
-                            <!-- /.card-body -->
-                        </div>
-                        <!-- /.card -->
-                    </section>
-                    <!-- right col -->
-                </div> --}}
-                <!-- /.row (main row) -->
             </div><!-- /.container-fluid -->
         </section>
-        <!-- /.content -->
     </div>
 @endsection
