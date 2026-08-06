@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\order;
 use App\Models\table;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use PDF;
@@ -12,66 +13,86 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        // Custom dates for the custom filter at the bottom
-        $startDate = $request->input('start_date', Carbon::today()->toDateString());
+        $user = auth()->user();
+
+        // Role based redirection
+        if ($user->isSuperAdmin()) {
+            return $this->superAdminReport($request);
+        } elseif ($user->isRestaurantAdmin()) {
+            return $this->restaurantAdminReport($request, $user->id);
+        }
+
+        abort(403, 'Unauthorized action.');
+    }
+
+    // ==========================================
+    // 1. SUPER ADMIN LOGIC
+    // ==========================================
+    private function superAdminReport(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::today()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::today()->toDateString());
 
-        // Optional table filter
+        $todayRevenue = Subscription::whereDate('created_at', Carbon::today())->sum('amount');
+        $thisMonthRevenue = Subscription::whereMonth('created_at', Carbon::now()->month)
+                                        ->whereYear('created_at', Carbon::now()->year)
+                                        ->sum('amount');
+
+        $rangeRevenue = Subscription::whereDate('created_at', '>=', $startDate)
+                                    ->whereDate('created_at', '<=', $endDate)
+                                    ->sum('amount');
+
+        $activeSubscriptionsCount = Subscription::where('status', 'active')
+                                                ->where('end_date', '>=', Carbon::today())
+                                                ->count();
+
+        $subscriptions = Subscription::with('user') 
+                            ->whereDate('created_at', '>=', $startDate)
+                            ->whereDate('created_at', '<=', $endDate)
+                            ->orderByDesc('created_at')
+                            ->get();
+
+        return view('backend.reports', compact(
+            'todayRevenue', 'thisMonthRevenue', 'rangeRevenue', 
+            'activeSubscriptionsCount', 'subscriptions', 
+            'startDate', 'endDate'
+        ));
+    }
+
+    // ==========================================
+    // 2. RESTAURANT ADMIN LOGIC (View Page)
+    // ==========================================
+    private function restaurantAdminReport(Request $request, $userId)
+    {
+        $startDate = $request->input('start_date', Carbon::today()->toDateString());
+        $endDate = $request->input('end_date', Carbon::today()->toDateString());
         $selectedTable = $request->input('table_id', null);
 
-        // Global Totals
-        // Today
-        $todayTotal = order::whereDate('created_at', Carbon::today())->sum('total');
-        $todayOrders = order::whereDate('created_at', Carbon::today())->distinct('order_number')->count();
+        $todayTotal = order::where('user_id', $userId)->whereDate('created_at', Carbon::today())->sum('total');
+        $todayOrders = order::where('user_id', $userId)->whereDate('created_at', Carbon::today())->distinct('order_number')->count();
 
-        // This Month
-        $thisMonthTotal = order::whereMonth('created_at', Carbon::now()->month)
-                                ->whereYear('created_at', Carbon::now()->year)
-                                ->sum('total');
-        $thisMonthOrders = order::whereMonth('created_at', Carbon::now()->month)
-                                 ->whereYear('created_at', Carbon::now()->year)
-                                 ->distinct('order_number')->count();
+        $thisMonthTotal = order::where('user_id', $userId)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->sum('total');
+        $thisMonthOrders = order::where('user_id', $userId)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->distinct('order_number')->count();
 
-        // Table wise calculations for Daily vs Monthly
-        // Keep full list for the select dropdown
-        $allTables = table::all();
+        $allTables = table::where('user_id', $userId)->get();
 
-        // Apply optional table filter when computing reports
-        $tables = table::when($selectedTable, function ($q, $val) {
+        $tables = table::where('user_id', $userId)->when($selectedTable, function ($q, $val) {
             $q->where('id', $val);
         })->get();
+        
         $tableReports = [];
         $totalRangeOrders = 0;
         $totalRangeRevenue = 0;
 
         foreach ($tables as $table) {
-            // Daily
-            $dailyRevenue = order::where('table_id', $table->id)
-                                ->whereDate('created_at', Carbon::today())
-                                ->sum('total');
-            $dailyOrdersCount = order::where('table_id', $table->id)
-                                    ->whereDate('created_at', Carbon::today())
-                                    ->distinct('order_number')->count();
+            $dailyRevenue = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', Carbon::today())->sum('total');
+            $dailyOrdersCount = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', Carbon::today())->distinct('order_number')->count();
 
-            // Monthly
-            $monthlyRevenue = order::where('table_id', $table->id)
-                                    ->whereMonth('created_at', Carbon::now()->month)
-                                    ->whereYear('created_at', Carbon::now()->year)
-                                    ->sum('total');
-            $monthlyOrdersCount = order::where('table_id', $table->id)
-                                        ->whereMonth('created_at', Carbon::now()->month)
-                                        ->whereYear('created_at', Carbon::now()->year)
-                                        ->distinct('order_number')->count();
+            $monthlyRevenue = order::where('user_id', $userId)->where('table_id', $table->id)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->sum('total');
+            $monthlyOrdersCount = order::where('user_id', $userId)->where('table_id', $table->id)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->distinct('order_number')->count();
 
-            // Custom Range (if they use the form)
-            $rangeRevenue = order::where('table_id', $table->id)
-                                    ->whereDate('created_at', '>=', $startDate)
-                                    ->whereDate('created_at', '<=', $endDate)
-                                    ->sum('total');
-            $rangeOrdersCount = order::where('table_id', $table->id)
-                                        ->whereDate('created_at', '>=', $startDate)
-                                        ->whereDate('created_at', '<=', $endDate)
-                                        ->distinct('order_number')->count();
+            $rangeRevenue = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->sum('total');
+            $rangeOrdersCount = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->distinct('order_number')->count();
 
             $totalRangeOrders += $rangeOrdersCount;
             $totalRangeRevenue += $rangeRevenue;
@@ -97,45 +118,53 @@ class ReportController extends Controller
         ));
     }
 
-    public function download(Request $request)
+    // ==========================================
+    // 3. PDF DOWNLOAD LOGIC
+    // ==========================================
+  /*  public function download(Request $request)
     {
-        // Increase memory and execution time for PDF generation
         ini_set('max_execution_time', 300);
         ini_set('memory_limit', '512M');
 
+        $user = auth()->user();
+        
+        if($user->isRestaurantAdmin()) {
+            return $this->downloadRestaurantPDF($request, $user->id);
+        }
+
+        abort(403, 'PDF download for this role is not available.');
+    } */
+
+    private function downloadRestaurantPDF(Request $request, $userId)
+    {
         $startDate = $request->input('start_date', Carbon::today()->toDateString());
         $endDate = $request->input('end_date', Carbon::today()->toDateString());
-
         $selectedTable = $request->input('table_id', null);
 
-        // Global Totals
-        $todayTotal = order::whereDate('created_at', Carbon::today())->sum('total');
-        $todayOrders = order::whereDate('created_at', Carbon::today())->distinct('order_number')->count();
+        // Fetch same data as index view, but strictly for PDF
+        $todayTotal = order::where('user_id', $userId)->whereDate('created_at', Carbon::today())->sum('total');
+        $todayOrders = order::where('user_id', $userId)->whereDate('created_at', Carbon::today())->distinct('order_number')->count();
 
-        $thisMonthTotal = order::whereMonth('created_at', Carbon::now()->month)
-                                ->whereYear('created_at', Carbon::now()->year)
-                                ->sum('total');
-        $thisMonthOrders = order::whereMonth('created_at', Carbon::now()->month)
-                                 ->whereYear('created_at', Carbon::now()->year)
-                                 ->distinct('order_number')->count();
+        $thisMonthTotal = order::where('user_id', $userId)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->sum('total');
+        $thisMonthOrders = order::where('user_id', $userId)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->distinct('order_number')->count();
 
-        // Table wise calculations for Daily vs Monthly
-        $tables = table::when($selectedTable, function ($q, $val) {
+        $tables = table::where('user_id', $userId)->when($selectedTable, function ($q, $val) {
             $q->where('id', $val);
         })->get();
+        
         $tableReports = [];
         $totalRangeOrders = 0;
         $totalRangeRevenue = 0;
 
         foreach ($tables as $table) {
-            $dailyRevenue = order::where('table_id', $table->id)->whereDate('created_at', Carbon::today())->sum('total');
-            $dailyOrdersCount = order::where('table_id', $table->id)->whereDate('created_at', Carbon::today())->distinct('order_number')->count();
+            $dailyRevenue = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', Carbon::today())->sum('total');
+            $dailyOrdersCount = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', Carbon::today())->distinct('order_number')->count();
 
-            $monthlyRevenue = order::where('table_id', $table->id)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->sum('total');
-            $monthlyOrdersCount = order::where('table_id', $table->id)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->distinct('order_number')->count();
+            $monthlyRevenue = order::where('user_id', $userId)->where('table_id', $table->id)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->sum('total');
+            $monthlyOrdersCount = order::where('user_id', $userId)->where('table_id', $table->id)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->distinct('order_number')->count();
 
-            $rangeRevenue = order::where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->sum('total');
-            $rangeOrdersCount = order::where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->distinct('order_number')->count();
+            $rangeRevenue = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->sum('total');
+            $rangeOrdersCount = order::where('user_id', $userId)->where('table_id', $table->id)->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate)->distinct('order_number')->count();
 
             $totalRangeOrders += $rangeOrdersCount;
             $totalRangeRevenue += $rangeRevenue;
@@ -151,19 +180,68 @@ class ReportController extends Controller
             ];
         }
 
-        $pdf = PDF::loadView('backend.reports_pdf', compact(
+        $data = compact(
             'todayTotal', 'todayOrders', 
             'thisMonthTotal', 'thisMonthOrders', 
             'tableReports', 
             'startDate', 'endDate',
             'totalRangeOrders', 'totalRangeRevenue'
-        ));
+        );
 
-        // Clear any output buffers to avoid corrupted PDF files
-        if (ob_get_length() > 0) {
-            ob_end_clean();
+        $pdf = PDF::loadView('backend.reports_pdf', $data);
+        return $pdf->download('Sales_Report_'.$startDate.'_to_'.$endDate.'.pdf');
+    } 
+
+        public function download(Request $request)
+    {
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
+        $user = auth()->user();
+        
+        // Super Admin ke liye condition add ki hai
+        if ($user->isSuperAdmin()) {
+            return $this->downloadSuperAdminPDF($request);
+        } elseif ($user->isRestaurantAdmin()) {
+            return $this->downloadRestaurantPDF($request, $user->id);
         }
 
-        return $pdf->download("Sales_Statement_{$startDate}_to_{$endDate}.pdf");
+        abort(403, 'PDF download for this role is not available.');
+    }
+
+    // Super Admin ki PDF generate karne ka function
+    private function downloadSuperAdminPDF(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::today()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::today()->toDateString());
+
+        $todayRevenue = Subscription::whereDate('created_at', Carbon::today())->sum('amount');
+        $thisMonthRevenue = Subscription::whereMonth('created_at', Carbon::now()->month)
+                                        ->whereYear('created_at', Carbon::now()->year)
+                                        ->sum('amount');
+
+        $rangeRevenue = Subscription::whereDate('created_at', '>=', $startDate)
+                                    ->whereDate('created_at', '<=', $endDate)
+                                    ->sum('amount');
+
+        $activeSubscriptionsCount = Subscription::where('status', 'active')
+                                                ->where('end_date', '>=', Carbon::today())
+                                                ->count();
+
+        $subscriptions = Subscription::with('user')
+                            ->whereDate('created_at', '>=', $startDate)
+                            ->whereDate('created_at', '<=', $endDate)
+                            ->orderByDesc('created_at')
+                            ->get();
+
+        $data = compact(
+            'todayRevenue', 'thisMonthRevenue', 'rangeRevenue',
+            'activeSubscriptionsCount', 'subscriptions',
+            'startDate', 'endDate'
+        );
+
+        // Yeh Super Admin ki nayi PDF view load karega
+        $pdf = PDF::loadView('backend.super_admin_reports_pdf', $data);
+        return $pdf->download('Subscriptions_Report_'.$startDate.'_to_'.$endDate.'.pdf');
     }
 }

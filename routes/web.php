@@ -44,8 +44,8 @@ Route::middleware([auth::class])->group(function () {
         });
 
         // Reports
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/reports/download', [ReportController::class, 'download'])->name('reports.download');
+       /* Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/download', [ReportController::class, 'download'])->name('reports.download');*/
     });
 
     // ============================================
@@ -105,6 +105,10 @@ Route::middleware([auth::class])->group(function () {
         Route::controller(OrderController::class)->group(function () {
             Route::get('/orders', 'index')->name('orders.index');
         });
+
+        // Reports
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/download', [ReportController::class, 'download'])->name('reports.download');
     });
 
     // ============================================
@@ -122,6 +126,8 @@ Route::middleware([auth::class])->group(function () {
         Route::controller(ContactController::class)->group(function () {
             Route::get('/contact', 'create')->name('contact.create');
             Route::post('/contact', 'store')->name('contact.store');
+            Route::get('/contact/chat/{userId}', 'chat')->name('contact.chat');
+            //Route::get('/contact/reply/{id}', 'reply')->name('contact.reply');
             Route::get('/inbox', 'index')->name('contact.index');
         });
         // ========================================

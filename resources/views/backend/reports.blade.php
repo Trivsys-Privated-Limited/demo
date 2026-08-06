@@ -2,14 +2,137 @@
 @section('nav')
     @include('layout.nav')
 @endsection
-
 @section('sidebar')
     @include('layout.sidebar')
 @endsection
 
 @section('home')
 <div class="content-wrapper">
-    <!-- Content Header -->
+    
+    {{-- =======================================================
+         1. SUPER ADMIN VIEW
+    ======================================================= --}}
+    @if(auth()->user()->isSuperAdmin())
+ <!--   <div class="content-header">
+        <div class="container-fluid">
+            <h1 class="m-0"><i class="fas fa-crown text-warning"></i>Subscriptions Report</h1>
+        </div>
+    </div> -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0"><i class="fas fa-crown text-warning"></i> Subscriptions Report</h1>
+                </div>
+                <!-- Yahan Button Form Add Kiya Hai -->
+                <div class="col-sm-6 text-right">
+                    <form action="{{ route('reports.download') }}" method="GET" class="d-inline">
+                        <input type="hidden" name="start_date" value="{{ $startDate }}">
+                        <input type="hidden" name="end_date" value="{{ $endDate }}">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-file-pdf"></i> Download PDF
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>Rs {{ number_format($todayRevenue, 2) }}</h3>
+                            <p>Today's Earning</p>
+                        </div>
+                        <div class="icon"><i class="ion ion-cash"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>Rs {{ number_format($thisMonthRevenue, 2) }}</h3>
+                            <p>This Month's Earning</p>
+                        </div>
+                        <div class="icon"><i class="ion ion-stats-bars"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3>{{ $activeSubscriptionsCount }}</h3>
+                            <p>Total Active Restaurants</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-store"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-dark">
+                    <h3 class="card-title">Filter Subscriptions</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('reports.index') }}" method="GET">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label>Start Date</label>
+                                <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label>End Date</label>
+                                <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+                    <hr>
+                    <h4 class="text-success mb-3">Filtered Revenue: Rs {{ number_format($rangeRevenue, 2) }}</h4>
+                    
+                    <table class="table table-bordered text-center">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Restaurant Name</th>
+                                <th>Duration</th>
+                                <th>Amount</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($subscriptions as $sub)
+                                <tr>
+                                    <td>{{ $sub->user->bussiness_name ?? 'N/A' }}</td>
+                                    <td>{{ $sub->months }} Month(s)</td>
+                                    <td class="text-success font-weight-bold">Rs {{ number_format($sub->amount, 2) }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($sub->start_date)->format('d M Y') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($sub->end_date)->format('d M Y') }}</td>
+                                    <td>
+                                        @if($sub->status == 'active')
+                                            <span class="badge badge-success">Active</span>
+                                        @else
+                                            <span class="badge badge-danger">Expired</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6">No subscriptions found.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- =======================================================
+         2. RESTAURANT ADMIN VIEW
+    ======================================================= --}}
+    @elseif(auth()->user()->isRestaurantAdmin())
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -30,176 +153,119 @@
         </div>
     </div>
 
-    <!-- Main content -->
     <section class="content">
         <div class="container-fluid">
-            <!-- Stats Boxes -->
             <div class="row">
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-info">
-                        <div class="inner">
-                            <h3>{{ $todayOrders }}</h3>
-                            <p>Today's Total Orders</p>
-                        </div>
-                        <div class="icon">
-                            <i class="ion ion-bag"></i>
-                        </div>
-                    </div>
-                </div>
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-success">
                         <div class="inner">
                             <h3>Rs {{ number_format($todayTotal, 2) }}</h3>
-                            <p>Today's Total Sale</p>
+                            <p>Today's Revenue</p>
                         </div>
-                        <div class="icon">
-                            <i class="ion ion-cash"></i>
+                        <div class="icon"><i class="ion ion-cash"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>{{ $todayOrders }}</h3>
+                            <p>Today's Orders</p>
                         </div>
+                        <div class="icon"><i class="ion ion-bag"></i></div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-warning">
                         <div class="inner">
-                            <h3>{{ $thisMonthOrders }}</h3>
-                            <p>This Month's Orders</p>
+                            <h3>Rs {{ number_format($thisMonthTotal, 2) }}</h3>
+                            <p>This Month's Revenue</p>
                         </div>
-                        <div class="icon">
-                            <i class="ion ion-ios-cart"></i>
-                        </div>
+                        <div class="icon"><i class="ion ion-stats-bars"></i></div>
                     </div>
                 </div>
-                
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-danger">
                         <div class="inner">
-                            <h3>Rs {{ number_format($thisMonthTotal, 2) }}</h3>
-                            <p>This Month's Total Sale</p>
+                            <h3>{{ $thisMonthOrders }}</h3>
+                            <p>This Month's Orders</p>
                         </div>
-                        <div class="icon">
-                            <i class="ion ion-stats-bars"></i>
-                        </div>
+                        <div class="icon"><i class="ion ion-pie-graph"></i></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Table Data -->
-            <div class="card">
-                <div class="card-header bg-dark">
-                    <h3 class="card-title">Table-wise Sales Breakdown (Daily vs Monthly)</h3>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-bordered table-striped text-center">
-                        <thead class="bg-light">
-                            <tr>
-                                <th rowspan="2" class="align-middle border-bottom-0">Table No.</th>
-                                <th colspan="2" class="border-bottom-0">TODAY'S RECORD</th>
-                                <th colspan="2" class="border-bottom-0">MONTHLY RECORD (THIS MONTH)</th>
-                            </tr>
-                            <tr>
-                                <th>Orders</th>
-                                <th>Revenue (Sale)</th>
-                                <th>Orders</th>
-                                <th>Revenue (Sale)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($tableReports as $report)
-                                <tr>
-                                    <td class="font-weight-bold">Table {{ $report->table_number }}</td>
-                                    <td>{{ $report->daily_orders }}</td>
-                                    <td class="text-success font-weight-bold">Rs {{ number_format($report->daily_revenue, 2) }}</td>
-                                    <td>{{ $report->monthly_orders }}</td>
-                                    <td class="text-primary font-weight-bold">Rs {{ number_format($report->monthly_revenue, 2) }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">No tables found.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Custom Date Filter Form -->
             <div class="card mt-4">
-                <div class="card-header bg-secondary">
-                    <h3 class="card-title">Custom Date Filter (Check Old Records)</h3>
+                <div class="card-header bg-dark">
+                    <h3 class="card-title">Filter Table Reports</h3>
                 </div>
                 <div class="card-body">
                     <form action="{{ route('reports.index') }}" method="GET">
                         <div class="row">
-                            <div class="col-md-3"> 
-                                <div class="form-group">
-                                    <label>Table</label>
-                                    <select name="table_id" class="form-control">
-                                        <option value="">All Tables</option>
-                                        @foreach($allTables as $t)
-                                            <option value="{{ $t->id }}" {{ (isset($selectedTable) && $selectedTable == $t->id) ? 'selected' : '' }}>Table {{ $t->table_number }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            <div class="col-md-3">
+                                <label>Start Date</label>
+                                <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
                             </div>
                             <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Start Date</label>
-                                    <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
-                                </div>
+                                <label>End Date</label>
+                                <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>End Date</label>
-                                    <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
-                                </div>
+                            <div class="col-md-4">
+                                <label>Select Table (Optional)</label>
+                                <select name="table_id" class="form-control">
+                                    <option value="">All Tables</option>
+                                    @foreach($allTables as $tbl)
+                                        <option value="{{ $tbl->id }}" {{ $selectedTable == $tbl->id ? 'selected' : '' }}>
+                                            Table {{ $tbl->table_number }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100 mb-3">Filter</button>
+                                <button type="submit" class="btn btn-primary w-100">Filter</button>
                             </div>
                         </div>
                     </form>
-                    
                     <hr>
-                    <h5 class="text-center mt-3 mb-3">Custom Range Record ({{ $startDate }} to {{ $endDate }})</h5>
-                    <table class="table table-bordered table-sm text-center">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>Table No.</th>
-                                <th>Total Orders in Range</th>
-                                <th>Total Sale in Range</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($tableReports as $report)
-                                @if($report->range_orders > 0)
-                                    <tr>
-                                        <td>Table {{ $report->table_number }}</td>
-                                        <td>{{ $report->range_orders }}</td>
-                                        <td>Rs {{ number_format($report->range_revenue, 2) }}</td>
-                                    </tr>
-                                @endif
-                            @endforeach
-                        </tbody>
-                    </table>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5 class="text-info font-weight-bold">Filtered Orders: {{ $totalRangeOrders }}</h5>
+                        <h5 class="text-success font-weight-bold">Filtered Revenue: Rs {{ number_format($totalRangeRevenue, 2) }}</h5>
+                    </div>
 
-                    <div class="row mt-3">
-                        <div class="col-md-6 offset-md-3">
-                            <div class="card bg-secondary text-white">
-                                <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="font-weight-bold">Total Orders in Range</span>
-                                        <span>{{ $totalRangeOrders }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span class="font-weight-bold">Total Sale in Range</span>
-                                        <span>Rs {{ number_format($totalRangeRevenue, 2) }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Table No</th>
+                                    <th>Today Orders</th>
+                                    <th>Today Revenue</th>
+                                    <th>Monthly Orders</th>
+                                    <th>Monthly Revenue</th>
+                                    <th>Filtered Orders (Range)</th>
+                                    <th>Filtered Revenue (Range)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($tableReports as $report)
+                                    <tr>
+                                        <td class="font-weight-bold">Table {{ $report->table_number }}</td>
+                                        <td>{{ $report->daily_orders }}</td>
+                                        <td class="text-success">Rs {{ number_format($report->daily_revenue, 2) }}</td>
+                                        <td>{{ $report->monthly_orders }}</td>
+                                        <td class="text-primary">Rs {{ number_format($report->monthly_revenue, 2) }}</td>
+                                        <td>{{ $report->range_orders }}</td>
+                                        <td class="text-info">Rs {{ number_format($report->range_revenue, 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="7" class="text-muted">No data available.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+    @endif
 </div>
 @endsection

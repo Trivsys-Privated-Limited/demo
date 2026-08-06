@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <title>Sales Statement</title>
     @php
-    $siteName = config('app.name', env('APP_NAME', 'Restaurant Demo'));
-    $siteEmail = config('mail.from.address', env('MAIL_FROM_ADDRESS', 'info@example.com'));
-@endphp
+        // Dynamically fetching the logged-in restaurant's name and email
+        $siteName = auth()->user()->bussiness_name ?? config('app.name', 'Restaurant Sales');
+        $siteEmail = auth()->user()->email ?? config('mail.from.address', 'info@example.com');
+    @endphp
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -81,11 +82,11 @@
 <body>
 
     <div class="header">
-    <h1>{{ $siteName }}</h1>
-    <p>Email: {{ $siteEmail }}</p>
-    <p><strong>Restaurant Sales Statement</strong></p>
-    <p>Generated on: {{ \Carbon\Carbon::now()->format('d M Y, h:i A') }}</p>
-</div>
+        <h1>{{ $siteName }}</h1>
+        <p>Email: {{ $siteEmail }}</p>
+        <p><strong>Restaurant Sales Statement</strong></p>
+        <p>Generated on: {{ \Carbon\Carbon::now()->format('d M Y, h:i A') }}</p>
+    </div>
 
     <!-- Summary -->
     <table class="summary-box">

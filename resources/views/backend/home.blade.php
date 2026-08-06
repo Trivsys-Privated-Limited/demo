@@ -42,7 +42,7 @@
                 ================================================================ --}}
                 @if(auth()->user()->isSuperAdmin())
 
-                    {{-- Admin Stat Boxes --}}
+                    {{-- Admin Stat Boxes --}}                    
                     <div class="row">
                         <div class="col-lg-3 col-6">
                             <div class="small-box bg-info">
@@ -58,11 +58,11 @@
                         <div class="col-lg-3 col-6">
                             <div class="small-box bg-success">
                                 <div class="inner">
-                                    <h3>{{ $totalOrders }}</h3>
-                                    <p>Total Orders</p>
+                                    <h3>{{ $activeSubscriptions }}</h3>
+                                    <p>Active Subscriptions</p>
                                 </div>
-                                <div class="icon"><i class="ion ion-bag"></i></div>
-                                <a href="{{ route('orders.index') }}" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                                <div class="icon"><i class="fas fa-check-circle"></i></div>
+                                <a href="{{ route('users.index') }}" class="small-box-footer">View Details <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
 
@@ -70,21 +70,21 @@
                             <div class="small-box bg-warning">
                                 <div class="inner">
                                     <h3>Rs {{ number_format($todayRevenue, 0) }}</h3>
-                                    <p>Today's Revenue</p>
+                                    <p>Today's Sub Revenue</p>
                                 </div>
                                 <div class="icon"><i class="fas fa-coins"></i></div>
-                                <a href="#" class="small-box-footer">All Restaurants <i class="fas fa-arrow-circle-right"></i></a>
+                                <a href="{{ route('dashboard.index') }}" class="small-box-footer">All Restaurants <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
 
                         <div class="col-lg-3 col-6">
                             <div class="small-box bg-danger">
                                 <div class="inner">
-                                    <h3>{{ $pendingOrders }}</h3>
-                                    <p>Pending Orders</p>
+                                    <h3>{{ $inactiveRestaurants }}</h3>
+                                    <p>Inactive Restaurants</p>
                                 </div>
-                                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
-                                <a href="{{ route('orders.index') }}" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                                <div class="icon"><i class="fas fa-store-slash"></i></div>
+                                <a href="{{ route('users.index') }}" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
                     </div>
@@ -138,10 +138,10 @@
                                         </div>
                                     </div>
                                     <div class="info-box bg-white shadow-sm">
-                                        <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
+                                        <span class="info-box-icon bg-danger"><i class="fas fa-store-slash"></i></span>
                                         <div class="info-box-content">
-                                            <span class="info-box-text">Pending Orders</span>
-                                            <span class="info-box-number">{{ $pendingOrders }}</span>
+                                            <span class="info-box-text">Inactive Stores</span>
+                                            <span class="info-box-number">{{ $inactiveRestaurants }}</span>
                                         </div>
                                     </div>
                                 </div>

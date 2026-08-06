@@ -56,13 +56,19 @@
                                 <p>Manage Restaurants</p>
                             </a>
                         </li>
-
                         <li class="nav-item">
+                            <a href="{{ route('users.create')}}" class="nav-link">
+                                <img class="w-[50px] nav-icon" src="{{asset('icon/user.png')}}" alt="">
+                                <p>Add New Restaurant</p>
+                            </a>
+                        </li>
+                        <!-- <li class="nav-item">
                             <a href="{{ route('orders.index') }}" class="nav-link">
                                 <img class="w-[50px] nav-icon" src="{{asset('icon/order.png')}}" alt="">
                                 <p>All Orders</p>
                             </a>
-                        </li>
+                        </li> -->
+
 
                         <li class="nav-item">
                             <a href="{{ route('reports.index') }}" class="nav-link">
@@ -108,6 +114,12 @@
                             <a href="{{ route('staff.index') }}" class="nav-link">
                                 <i class="nav-icon fas fa-users text-success"></i>
                                 <p>Kitchen Staff</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('reports.index') }}" class="nav-link">
+                                <i class="nav-icon fas fa-chart-line text-info"></i>
+                                <p>Reports</p>
                             </a>
                         </li>
                         {{-- Restaurant Admin ke block ke andar Kitchen Staff ke niche yeh dalein --}}
